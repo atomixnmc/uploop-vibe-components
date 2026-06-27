@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: vibe
+
+      - name: Checkout uploopjs
+        uses: actions/checkout@v4
+        with:
+          repository: atomixnmc/uploopjs
+          path: uploopjs
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: vibe/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: vibe
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: vibe
+        run: npx playwright install chromium --with-deps
+
+      - name: Lint (syntax check)
+        working-directory: vibe
+        run: |
+          find packages -name "*.js" -exec node --check {} \; 2>&1 | grep -v "^$" || true
+
+      - name: E2E tests
+        working-directory: vibe
+        run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: vibe/test-results/

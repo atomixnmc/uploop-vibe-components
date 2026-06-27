@@ -1,0 +1,20 @@
+{
+  "name": "@uploop-vibe/vibe-ai",
+  "version": "0.1.0",
+  "description": "Uploop Vibe AI — intent-driven component & page generation from natural descriptions",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": { "import": "./src/index.js" }
+  },
+  "files": ["src"],
+  "scripts": { "test": "vitest" },
+  "dependencies": {
+    "@uploop/core": "link:../../../uploopjs/packages/core",
+    "@uploop/html": "link:../../../uploopjs/packages/html",
+    "@uploop/css": "link:../../../uploopjs/packages/css",
+    "@uploop/schema": "link:../../../uploopjs/packages/schema",
+    "@uploop/flows": "link:../../../uploopjs/packages/flows",
+    "@uploop-vibe/vibe": "workspace:*"
+  }
+}

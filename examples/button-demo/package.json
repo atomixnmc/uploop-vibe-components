@@ -1,0 +1,5 @@
+{
+  "name": "@examples/button-demo",
+  "private": true,
+  "type": "module"
+}

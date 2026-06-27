@@ -1,0 +1,27 @@
+{
+  "name": "uploop-vibe-components",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm run build -ws --if-present",
+    "test": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.8",
+    "conventional-changelog-conventionalcommits": "^10.0.0",
+    "jsdom": "^29.1.1",
+    "semantic-release": "^25.0.5",
+    "vite": "^5.2.0",
+    "vitest": "^1.6.0"
+  }
+}

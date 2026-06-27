@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Component Showcase — Uploop Vibe</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin:0; }
+    body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background:#f8f9fa; color:#212529; -webkit-font-smoothing:antialiased; }
+    #app { display:flex; min-height:100vh; }
+    .sidebar { width:260px; flex-shrink:0; background:white; border-right:1px solid #e8e8ed; padding:1rem 0; overflow-y:auto; position:sticky; top:0; height:100vh; }
+    .sidebar h2 { font-size:0.9rem; font-weight:700; padding:0.5rem 1rem; color:#333; }
+    .sidebar .cat-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#aaa; padding:0.75rem 1rem 0.25rem; }
+    .sidebar button { display:block; width:100%; text-align:left; padding:0.35rem 1rem; border:none; background:transparent; font-size:0.8rem; cursor:pointer; color:#555; transition:all 0.1s; border-left:2px solid transparent; }
+    .sidebar button:hover { background:#f5f5ff; color:#333; }
+    .sidebar button.active { background:#f0f0ff; color:#646cff; font-weight:600; border-left-color:#646cff; }
+    .sidebar .back-link { display:block; padding:0.5rem 1rem; font-size:0.75rem; color:#aaa; text-decoration:none; margin-bottom:0.5rem; }
+    .main { flex:1; padding:2rem; overflow-y:auto; }
+    .main h1 { font-size:1.5rem; font-weight:800; margin-bottom:0.25rem; }
+    .main .desc { color:#888; font-size:0.85rem; margin-bottom:1.5rem; }
+    .demo-area { background:white; border:1px solid #e8e8ed; border-radius:12px; padding:1.5rem; min-height:200px; margin-bottom:1.5rem; }
+    .demo-area h3 { font-size:0.85rem; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1rem; }
+    .code-block { background:#1e1e2e; color:#cdd6f4; padding:1rem; border-radius:8px; font-family:'JetBrains Mono','Fira Code',monospace; font-size:0.78rem; overflow-x:auto; white-space:pre; }
+    .code-block .kw { color:#c792ea; } .code-block .fn { color:#82aaff; } .code-block .str { color:#c3e88d; } .code-block .cmt { color:#6c7086; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
