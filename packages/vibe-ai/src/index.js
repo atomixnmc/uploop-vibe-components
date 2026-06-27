@@ -1,19 +1,8 @@
 // ─── @uploop-vibe/vibe-ai — Public API ───────────────────────
 // AI-first component and page generation for Uploop.
 //
-// Breakthrough features:
-//   - generateComponent(intent) → runnable Uploop component from intent
-//   - composeEntityPage(schema, opts) → CRUD page from schema
-//   - materializeTemplate('signupForm') → pre-built page
-//   - Describe components, resolve intents, suggest flows
-//
-// v0.2 — AI Feedback Loop:
-//   - validateVibeIntent(intent) → structured errors with alternatives
-//   - auditManifest(manifest) → quality score + issues + suggestions
-//   - requestComponent(name) → creation spec + queue tracking
-//
-// This is the AI bridge: describe what you want in plain intent,
-// get a real, working Uploop component with Vibe design.
+// v0.1 — Component generation + templates
+// v0.2 — AI Feedback Loop (validator, auditor, IFS engine)
 
 // ── Generator ────────────────────────────────────────────────
 
@@ -50,7 +39,7 @@ export {
   listTemplates,
 } from './templates.js'
 
-// ── v0.2: AI Feedback Loop ──────────────────────────────────
+// ── v0.2: Error System ──────────────────────────────────────
 
 export {
   ErrorCodes,
@@ -61,14 +50,20 @@ export {
   createSuccessResponse,
 } from './errors.js'
 
+// ── v0.2: Validator ─────────────────────────────────────────
+
 export {
   validateVibeIntent,
 } from './validator.js'
+
+// ── v0.2: Auditor ───────────────────────────────────────────
 
 export {
   auditManifest,
   quickScore,
 } from './auditor.js'
+
+// ── v0.2: Spec Generator ────────────────────────────────────
 
 export {
   requestComponent,
@@ -76,6 +71,28 @@ export {
   getTopRequests,
   clearRequestQueue,
 } from './spec-generator.js'
+
+// ── v0.2: Transform Engine ──────────────────────────────────
+
+export {
+  applyTransform,
+  applyTransforms,
+  diff,
+} from './transforms.js'
+
+// ── v0.2: Loop Guard ────────────────────────────────────────
+
+export {
+  createLoopGuard,
+  ScoreWeights,
+  weightedAudit,
+} from './loop-guard.js'
+
+// ── v0.2: IFS Engine ────────────────────────────────────────
+
+export {
+  runIFSLoop,
+} from './ifs-engine.js'
 
 // ── Convenience re-exports ───────────────────────────────────
 
