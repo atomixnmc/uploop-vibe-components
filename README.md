@@ -12,94 +12,48 @@
 <p align="center">
   <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/ci.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+  <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml/badge.svg" alt="Pages"></a>
   <a href="#"><img src="https://img.shields.io/badge/components-98-blueviolet" alt="Components"></a>
-  <a href="#"><img src="https://img.shields.io/badge/version-v0.1.0-orange" alt="Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/version-v0.2.0-orange" alt="Version"></a>
   <a href="https://github.com/atomixnmc/uploopjs"><img src="https://img.shields.io/badge/powered%20by-UploopJS-646cff" alt="UploopJS"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple" alt="License"></a>
 </p>
 
 ---
 
-**Uploop Vibe** is not another component library. It's an **AI-native design framework** where components are inspectable HyperGraph nodes, AI generates UIs from intent descriptions, and every page exports a machine-readable manifest.
+**Uploop Vibe** is not another component library. It's an **AI-native design framework** built on the HyperGraph architecture. AI generates UIs from intents, Vibe executes via determistic IFS loops, and every page exports a machine-readable manifest.
 
-Built on [UploopJS](https://github.com/atomixnmc/uploopjs) — the HyperGraph UI framework where components are typed graphs of nodes and edges.
+Built on [UploopJS](https://github.com/atomixnmc/uploopjs).
 
-```js
-import { Button, Card, vibeLight, applyVibeTheme } from '@uploop-vibe/vibe'
-import { generateComponent, composeEntityPage } from '@uploop-vibe/vibe-ai'
+```bash
+# CLI usage
+vibe generate page --goal dashboard --entity Product --actions search,create,delete
+vibe generate component --type button --label "Save" --variant solid
 
-// 1. Apply theme
-applyVibeTheme(vibeLight)
-
-// 2. Generate from intent (AI-driven)
-const btn = generateComponent({ type: 'button', props: { label: 'Save', variant: 'solid' } })
-btn.mount(document.getElementById('root'))
-
-// 3. Compose from schema
-const page = composeEntityPage({ schema: userSchema, mode: 'form' })
-page.page.mount(document.getElementById('app'))
+# MCP — AI agent integration
+vibe mcp    # exposes 9 tools via Model Context Protocol
 ```
 
-## Why Vibe?
+```js
+// Programmatic usage
+import { generateComponent, runIFSLoop, validateVibeIntent } from '@uploop-vibe/vibe-ai'
 
-| | Traditional UI Lib | Uploop Vibe |
-|---|-------------------|-------------|
-| **Creation** | Manual code | **Intent-driven** — describe, don't code |
-| **AI Integration** | None | **Native intent API** — LLMs generate JSON, not JSX |
-| **Inspectability** | DOM tree + CSS classes | **HyperGraph manifest** — typed nodes, edges, state shape |
-| **Optimization** | Manual profiling | **24 pre-tuned execution profiles** — auto-suggested |
-| **Bundle (gzip)** | 50-75 KB | **~46 KB** (uploopjs + vibe) |
-| **CSP-safe** | No (inline handlers) | **Yes** — `addEventListener`, no `eval` |
-| **Architecture** | Component tree | **HyperGraph** — inspectable, serializable, debuggable |
+const result = await runIFSLoop({
+  goal: 'data-management',
+  entity: { name: 'User', fields: [...] },
+  actions: ['search', 'create', 'edit', 'delete'],
+})
+// → Converged after 3 iterations. Score: 91 (A).
+```
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
 | `@uploop-vibe/vibe` | 98 components, design tokens, theme engine, motion system, layout builder |
-| `@uploop-vibe/vibe-ai` | Intent → Component resolver, Schema → Page composer, template materializer |
-
-## 98 Components · 10 Categories
-
-| Category | Components |
-|----------|-----------|
-| **Layout** (12) | Container, Grid, Stack, Flex, Spacer, Divider, Box, Center, AspectRatio, Wrap, SkipNav, BackToTop |
-| **Navigation** (10) | Nav, Dropdown, Tabs, Breadcrumb, Link, Pagination, Stepper, ContextMenu, CommandPalette, ScrollSpy |
-| **Data Entry** (16) | Input, Textarea, Select, Checkbox, Radio, Switch, Slider, NumberInput, SearchInput, PinInput, ColorPicker, FileUpload, TagInput, Rating, Combobox, SegmentedControl |
-| **Data Display** (14) | Card, CardHeader, CardBody, CardFooter, Badge, Avatar, Table, List, Timeline, TreeView, Stat, DescriptionList, Accordion, Carousel |
-| **Feedback** (12) | Toast, Skeleton, Progress, Alert, Notification, Banner, Spinner, EmptyState, ErrorState, LoadingOverlay, Result, Spotlight |
-| **Overlay** (9) | Modal, Dialog, Tooltip, Drawer, Sheet, Popover, HoverCard, Lightbox, FullscreenOverlay |
-| **Typography** (9) | Heading, Text, Label, Caption, Highlight, Code, BlockCode, Kbd, Blockquote |
-| **Media** (6) | Icon, Image, Video, Audio, Figure, AvatarGroup |
-| **Utility** (5) | Portal, Transition, FocusTrap, ClickOutside, LazyLoad |
-| **DataViz** (4) | Sparkline, Gauge, StatsCard, TrendIndicator |
-| **Button** (1) | Button — 8 variants × 5 sizes × icon × loading × animation |
-
-## AI-First: Intent → UI
-
-The breakthrough: describe what you want, Vibe materializes it.
-
-```js
-import { generateComponent, composeEntityPage, materializeTemplate } from '@uploop-vibe/vibe-ai'
-
-// Intent → Component
-const btn = generateComponent({
-  type: 'button',
-  props: { label: 'Save', variant: 'solid', size: 'lg' },
-  style: { animate: 'scale-in' }
-})
-
-// Schema → Full Page
-const { page, entityComp, flow } = composeEntityPage({
-  schema: userSchema,
-  mode: 'form'
-})
-
-// Template → Page
-const signup = materializeTemplate('signupForm')
-```
-
-**No code generation.** Vibe maps intents to existing, tested HyperGraph components — then wires them into a running Uploop loop. LLMs generate JSON, not JSX.
+| `@uploop-vibe/vibe-ai` | Intent resolver, IFS loop engine, validator, auditor, error system, spec generator |
+| `@uploop-vibe/vibe-cli` | CLI for on-demand UI generation, MCP server for AI agent tooling (9 tools) |
+| `@uploop-vibe/vibe-devutils` | Inspector, debugger, diff viewer, manifest serializer — DevX for humans & AI |
 
 ## Quick Start
 
@@ -110,38 +64,63 @@ pnpm install
 pnpm dev          # → http://localhost:3100
 ```
 
-Open the browser to see:
-- **Component Showcase** (`/showcase/`) — 98 components with live demos and code
-- **Vibe AI Examples** (`/vibe-ai/`) — Intent → Component, Schema → Page, Templates
+🌐 **Live demo:** [atomixnmc.github.io/uploop-vibe-components](https://atomixnmc.github.io/uploop-vibe-components/)
 
-## Design System
+## AI Agent Integration (MCP)
 
-- **60+ design tokens** — colors, spacing, typography, shadows, radius, z-index, motion
-- **Theme engine** — `vibeTheme()`, `vibeLight`, `vibeDark`, CSS custom properties
-- **11 animation presets** — fade, slide, scale, spin, pulse, shimmer + stagger
-- **Intent-mapped scales** — `resolveSize('md')`, `resolveVariant('ghost')`
+Vibe exposes 9 tools via Model Context Protocol — AI agents can generate, validate, audit, and diff UIs:
 
-## Powered by UploopJS
+```json
+{
+  "mcpServers": {
+    "vibe": {
+      "command": "npx",
+      "args": ["@uploop-vibe/vibe-cli", "mcp"]
+    }
+  }
+}
+```
 
-Vibe is built on [UploopJS](https://github.com/atomixnmc/uploopjs) — the HyperGraph UI framework with:
+**Available tools:** `generate_page`, `generate_component`, `validate_intent`, `audit_manifest`, `list_components`, `list_templates`, `diff_manifests`, `request_component`, `request_queue`
 
-- **Graph engine** — typed nodes, dependency edges, topological sort, critical path analysis
-- **Declarative async** — `debounce`, `cache`, `interruptible`, `error` as metadata on handlers
-- **CSP-safe** — `@click` uses `addEventListener`, no inline `onclick`
-- **No build step** — pure ESM, works from CDN or local file
-- **No JSX** — standard tagged template literals
-- **~26 KB gzip** — 40% smaller than React + Tailwind + Zustand + Router combined
+## IFS Loop: Generative HyperGraphs
+
+Vibe uses **Iterated Function Systems** — deterministic graph transformations applied iteratively:
+
+```
+Seed Intent → Vibe resolves → G₁ → Audit → AI proposes patches → Vibe applies → G₂ → ... → Converge
+```
+
+Every iteration is a pure function. Every graph is versioned. Every transform is validated before application. Loop guards prevent oscillation and stalls.
+
+## 98 Components · 10 Categories
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| **Layout** | 12 | Container, Grid, Stack, Flex, Box, Center, AspectRatio, Wrap |
+| **Navigation** | 10 | Nav, Dropdown, Tabs, Breadcrumb, Pagination, Stepper, CommandPalette |
+| **Data Entry** | 16 | Input, Select, Slider, Switch, PinInput, ColorPicker, Combobox, Rating |
+| **Data Display** | 14 | Card, Table, Badge, Avatar, Timeline, TreeView, Accordion, Carousel |
+| **Feedback** | 12 | Alert, Toast, Progress, Skeleton, EmptyState, ErrorState, Spotlight |
+| **Overlay** | 9 | Modal, Dialog, Drawer, Sheet, Popover, Tooltip, Lightbox |
+| **Typography** | 9 | Heading, Text, Code, BlockCode, Kbd, Blockquote, Highlight |
+| **Media** | 6 | Icon, Image, Video, Audio, Figure, AvatarGroup |
+| **Utility** | 5 | Portal, Transition, FocusTrap, ClickOutside, LazyLoad |
+| **DataViz** | 4 | Sparkline, Gauge, StatsCard, TrendIndicator |
+| **Button** | 1 | 8 variants × 5 sizes × icon × loading × animation |
 
 ## Docs
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Full architecture — packages, data flow, dependency map |
-| [HOWTO.md](./docs/HOWTO.md) | Developer guide — components, AI intent API, theming |
+| [HOWTO.md](./docs/HOWTO.md) | Developer guide — components, AI intent API, CLI, MCP |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Full architecture — packages, data flow, IFS engine |
 | [AI_GUIDELINE.md](./docs/AI_GUIDELINE.md) | Project rules — SDLC, commits, code style |
 | [PLAN.md](./docs/PLAN.md) | Development phases v0.1–v0.9 |
+| [design/design-ifs-protocol.md](./docs/design/design-ifs-protocol.md) | IFS protocol — generative HyperGraphs |
+| [design/design-ai-protocol.md](./docs/design/design-ai-protocol.md) | AI↔Vibe contract |
 | [reports/why-vibe-wins-ai-moat.md](./docs/reports/why-vibe-wins-ai-moat.md) | Why AI-first beats 10 years of components |
-| [reports/v0.1-compare-frameworks.md](./docs/reports/v0.1-compare-frameworks.md) | Framework comparison: MUI, Ant, Chakra, Ark, Daisy |
+| [reports/v0.1-compare-frameworks.md](./docs/reports/v0.1-compare-frameworks.md) | MUI, Ant, Chakra, Ark, Daisy comparison |
 
 ## License
 

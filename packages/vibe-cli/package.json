@@ -1,0 +1,22 @@
+{
+  "name": "@uploop-vibe/vibe-cli",
+  "version": "0.1.0",
+  "description": "Uploop Vibe CLI — generate UI on demand, MCP tools for AI agents",
+  "type": "module",
+  "main": "./src/index.js",
+  "bin": {
+    "vibe": "./src/cli.js"
+  },
+  "exports": {
+    ".": { "import": "./src/index.js" },
+    "./mcp": { "import": "./src/mcp-server.js" }
+  },
+  "files": ["src"],
+  "scripts": { "test": "vitest" },
+  "dependencies": {
+    "@uploop-vibe/vibe": "workspace:*",
+    "@uploop-vibe/vibe-ai": "workspace:*",
+    "@uploop/html": "link:../../../uploopjs/packages/html",
+    "@uploop/schema": "link:../../../uploopjs/packages/schema"
+  }
+}

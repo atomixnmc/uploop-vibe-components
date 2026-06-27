@@ -270,3 +270,73 @@ All components render semantic HTML:
 - Inputs use native `<input>`, `<select>`, `<textarea>`
 - Modals use focus trap (pending)
 - Icons have `aria-hidden` (pending)
+
+
+## CLI Usage
+
+```bash
+# Generate a full page via IFS loop
+vibe generate page --goal dashboard --entity Product --actions search,create,delete
+
+# Generate a single component
+vibe generate component --type button --label "Save" --variant solid --size lg
+
+# List available components by category
+vibe list --category navigation
+
+# Start MCP server for AI agent connections
+vibe mcp
+
+# Scaffold a new project
+vibe scaffold my-app
+```
+
+## MCP — AI Agent Integration
+
+Vibe exposes 9 tools via Model Context Protocol. AI agents (Claude Desktop, Cursor, etc.) can generate, validate, and audit UIs:
+
+```json
+{
+  "mcpServers": {
+    "vibe": {
+      "command": "npx",
+      "args": ["@uploop-vibe/vibe-cli", "mcp"]
+    }
+  }
+}
+```
+
+Tools: `generate_page`, `generate_component`, `validate_intent`, `audit_manifest`, `list_components`, `list_templates`, `diff_manifests`, `request_component`, `request_queue`
+
+## DevUtils
+
+```js
+import { inspectManifest, debugIntent, viewDiff, serializeManifest } from '@uploop-vibe/vibe-devutils'
+
+// Inspect a page manifest
+const report = inspectManifest(page.describe())
+// { summary: { totalNodes: 15, viewNodes: 8 }, patterns: { hasSearch: true } }
+
+// Debug an intent — structured errors with fix suggestions
+const debug = debugIntent({ type: 'kanban', props: {} })
+
+// Diff two manifests — structured before/after
+const delta = viewDiff(beforeManifest, afterManifest)
+
+// Serialize for AI context (~70% smaller than JSON)
+const compact = serializeManifest(manifest)
+```
+
+## IFS Loop — Generative HyperGraphs
+
+```js
+import { runIFSLoop } from '@uploop-vibe/vibe-ai'
+
+const result = await runIFSLoop(
+  { goal: 'dashboard', entity: { name: 'Metrics', fields: [...] }, actions: ['view'] },
+  { maxIterations: 5, scoreThreshold: 85 }
+)
+
+console.log(`Converged after ${result.iterations} iterations. Score: ${result.finalScore}`)
+// Each iteration: { manifest, audit, transforms, diff }
+```
