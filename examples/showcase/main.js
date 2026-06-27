@@ -674,7 +674,7 @@ const catalog = [
 // ── Render helpers (vanilla DOM, no Uploop child components) ─
 
 function renderSidebar(state) {
-  let html = '<a href="/" style="display:block;padding:0.25rem 0.75rem;font-size:0.72rem;color:#aaa;text-decoration:none;">← Back</a>'
+  let html = '<a href="../" style="display:block;padding:0.25rem 0.75rem;font-size:0.72rem;color:#aaa;text-decoration:none;">← Back</a>'
   html += '<div style="padding:0.25rem 0.75rem 0.5rem;"><div style="font-size:0.9rem;font-weight:800;">🎨 Components</div><div style="font-size:0.7rem;color:#aaa;">98 components · 10 categories</div></div>'
   catalog.forEach(function(c) {
     html += '<div><div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#aaa;padding:0.6rem 0.75rem 0.15rem;">' + c.icon + ' ' + c.name + '</div>'

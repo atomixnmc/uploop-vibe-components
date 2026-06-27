@@ -103,7 +103,7 @@ const AIDemo = component('VibeAIDemo', {
     return html`
       <div style="max-width:960px;margin:0 auto;padding:2rem 1.5rem;">
         <div style="text-align:center;margin-bottom:2rem;">
-          <a href="/" style="font-size:0.75rem;color:#aaa;text-decoration:none;">← Home</a>
+          <a href="../" style="font-size:0.75rem;color:#aaa;text-decoration:none;">← Home</a>
           <h1 style="font-size:2rem;font-weight:800;margin:0.5rem 0 0.25rem;">🤖 Vibe AI</h1>
           <p style="color:#888;font-size:0.95rem;max-width:560px;margin:0 auto;line-height:1.5;">
             Describe what you want in plain <strong>intent</strong> — Vibe materializes it as a real, runnable Uploop component.
