@@ -94,6 +94,11 @@ export {
   runIFSLoop,
 } from './ifs-engine.js'
 
+export {
+  resolveSeedToManifest,
+} from './seed-resolver.js'
+
+
 // ── Convenience re-exports ───────────────────────────────────
 
 export { component } from '@uploop/html'

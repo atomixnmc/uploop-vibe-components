@@ -107,12 +107,14 @@ export {
 
 // ── Button ───────────────────────────────────────────────────
 
+import { DatePicker, DateRangePicker } from './datepicker.js'
 import { Button } from './button.js'
-export { Button }
+export { Button, DatePicker, DateRangePicker }
 
 // ── Component Registry (for AI intent resolution) ────────────
 
 export const componentRegistry = {
+  DatePicker, DateRangePicker,
   // Layout (12)
   Container, Grid, Stack, Flex, Spacer, Divider,
   Box, Center, AspectRatio, Wrap, SkipNav, BackToTop,

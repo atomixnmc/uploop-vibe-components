@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => ({
         main: resolve(examplesRoot, "index.html"),
         showcase: resolve(examplesRoot, "showcase/index.html"),
         "vibe-ai": resolve(examplesRoot, "vibe-ai/index.html"),
+        "ifs-demo": resolve(examplesRoot, "ifs-demo/index.html"),
       },
     },
   },
