@@ -1,13 +1,16 @@
 import { defineConfig } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { resolve } from "path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploopRoot = path.resolve(__dirname, "../uploopjs/packages");
 const vibeRoot = path.resolve(__dirname, "packages");
+const examplesRoot = resolve(__dirname, "examples");
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: "examples",
+  base: process.env.BASE_URL || "/",
   server: {
     port: 3100,
     open: true,
@@ -28,5 +31,12 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(examplesRoot, "index.html"),
+        showcase: resolve(examplesRoot, "showcase/index.html"),
+        "vibe-ai": resolve(examplesRoot, "vibe-ai/index.html"),
+      },
+    },
   },
-});
+}));
