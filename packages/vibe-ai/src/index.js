@@ -7,6 +7,11 @@
 //   - materializeTemplate('signupForm') → pre-built page
 //   - Describe components, resolve intents, suggest flows
 //
+// v0.2 — AI Feedback Loop:
+//   - validateVibeIntent(intent) → structured errors with alternatives
+//   - auditManifest(manifest) → quality score + issues + suggestions
+//   - requestComponent(name) → creation spec + queue tracking
+//
 // This is the AI bridge: describe what you want in plain intent,
 // get a real, working Uploop component with Vibe design.
 
@@ -44,6 +49,33 @@ export {
   materializeTemplate,
   listTemplates,
 } from './templates.js'
+
+// ── v0.2: AI Feedback Loop ──────────────────────────────────
+
+export {
+  ErrorCodes,
+  getAlternatives,
+  generateCreationSpec,
+  createErrorResponse,
+  createWarningResponse,
+  createSuccessResponse,
+} from './errors.js'
+
+export {
+  validateVibeIntent,
+} from './validator.js'
+
+export {
+  auditManifest,
+  quickScore,
+} from './auditor.js'
+
+export {
+  requestComponent,
+  getRequestQueue,
+  getTopRequests,
+  clearRequestQueue,
+} from './spec-generator.js'
 
 // ── Convenience re-exports ───────────────────────────────────
 
