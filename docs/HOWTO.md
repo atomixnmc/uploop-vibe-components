@@ -340,3 +340,88 @@ const result = await runIFSLoop(
 console.log(`Converged after ${result.iterations} iterations. Score: ${result.finalScore}`)
 // Each iteration: { manifest, audit, transforms, diff }
 ```
+
+## Charts (vibe-charts)
+
+```js
+import { LineChart, BarChart, HorizontalBarChart, PieChart, AreaChart, ScatterPlot, NetworkGraph, Heatmap } from '@uploop-vibe/vibe-charts'
+
+// Line chart -- time-series
+const line = LineChart.create({
+  data: [10, 25, 15, 40, 30],
+  labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5'],
+  title: 'Revenue',
+  showDots: true,
+})
+line.mount(el)
+
+// Bar chart -- categorical
+const bar = BarChart.create({
+  data: [{ label: 'VCB', value: 12.5 }, { label: 'BIDV', value: 9.8 }],
+  title: 'CAR by Bank',
+})
+bar.mount(el)
+
+// Horizontal bar -- rankings
+const hbar = HorizontalBarChart.create({
+  data: [{ label: 'VCB', value: 95 }, { label: 'BIDV', value: 82 }],
+  title: 'Top Banks',
+})
+hbar.mount(el)
+
+// Pie chart -- composition (use donut: true for donut chart)
+const pie = PieChart.create({
+  data: [{ label: 'Loans', value: 65 }, { label: 'Securities', value: 20 }],
+  donut: true,
+})
+pie.mount(el)
+
+// Area chart -- volume over time, supports stacking
+const area = AreaChart.create({
+  data: [
+    { label: 'Revenue', values: [10, 20, 15, 30], color: '#646cff' },
+    { label: 'Cost', values: [5, 8, 7, 12], color: '#fa5252' },
+  ],
+  stacked: true,
+})
+area.mount(el)
+
+// Scatter plot -- correlation with optional bubble radius
+const scatter = ScatterPlot.create({
+  data: [
+    { x: 12.5, y: 1.2, r: 8, label: 'VCB' },
+    { x: 9.8, y: 2.1, r: 6, label: 'BIDV' },
+  ],
+  xLabel: 'CAR %',
+  yLabel: 'NPL %',
+})
+scatter.mount(el)
+
+// Network graph -- node-edge relationships
+const graph = NetworkGraph.create({
+  nodes: [{ id: 'VCB', label: 'Vietcombank', size: 20 }, { id: 'BIDV', label: 'BIDV', size: 18 }],
+  edges: [{ from: 'VCB', to: 'BIDV', weight: 0.8 }],
+  layout: 'circular',
+})
+graph.mount(el)
+
+// Heatmap -- color-coded matrix for risk grids, correlation
+const heat = Heatmap.create({
+  data: [[0.12, 0.05], [0.03, 0.01], [0.09, 0.15]],
+  rowLabels: ['Credit Risk', 'Market Risk', 'Operational Risk'],
+  colLabels: ['Q1', 'Q2'],
+  colorScale: ['#15803d', '#ca8a04', '#b91c1c'],  // green -> yellow -> red
+})
+heat.mount(el)
+```
+
+All charts support dynamic updates:
+```js
+chart.loop.send('setData', newData)
+chart.loop.send('configure', { title: 'Updated', showDots: false })
+```
+
+Vibe core also includes inline DataViz for KPI cards:
+```js
+import { Sparkline, Gauge, StatsCard, TrendIndicator } from '@uploop-vibe/vibe'
+```
