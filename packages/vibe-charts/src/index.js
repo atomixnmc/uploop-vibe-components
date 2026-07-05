@@ -1,5 +1,5 @@
 // ─── @uploop-vibe/vibe-charts — Public API ──────────────────
-// 10 chart types for dashboards and data visualization.
+// 19 chart types for dashboards and data visualization.
 
 export { LineChart } from './line-chart.js'
 export { BarChart } from './bar-chart.js'
@@ -11,3 +11,12 @@ export { NetworkGraph } from './network-graph.js'
 export { Heatmap } from './heatmap.js'
 export { GaugeChart } from './gauge-chart.js'
 export { ComboChart } from './combo-chart.js'
+export { RadarChart } from './radar-chart.js'
+export { FunnelChart } from './funnel-chart.js'
+export { WaterfallChart } from './waterfall-chart.js'
+export { SankeyChart } from './sankey-chart.js'
+export { StockChart } from './stock-chart.js'
+export { BidirectionalBarChart } from './bidirectional-bar.js'
+export { Treemap } from './treemap.js'
+export { WordCloud } from './wordcloud.js'
+export { BulletChart } from './bullet-chart.js'

@@ -14,7 +14,7 @@
   <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml/badge.svg" alt="Release"></a>
   <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml/badge.svg" alt="Pages"></a>
   <a href="#"><img src="https://img.shields.io/badge/components-107-blueviolet" alt="Components"></a>
-  <a href="#"><img src="https://img.shields.io/badge/charts-8-success" alt="Charts"></a>
+  <a href="#"><img src="https://img.shields.io/badge/charts-19-success" alt="Charts"></a>
   <a href="#"><img src="https://img.shields.io/badge/version-v0.2.1-orange" alt="Version"></a>
   <a href="https://github.com/atomixnmc/uploopjs"><img src="https://img.shields.io/badge/powered%20by-UploopJS-646cff" alt="UploopJS"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple" alt="License"></a>
@@ -53,7 +53,7 @@ const result = await runIFSLoop({
 |---------|-------------|
 | `@uploop-vibe/vibe` | 107 components, design tokens, theme engine, motion system, layout builder |
 | `@uploop-vibe/vibe-ai` | Intent resolver, IFS loop engine, validator, auditor, error system, spec generator |
-| `@uploop-vibe/vibe-charts` | 8 SVG chart types — line, bar, pie, area, scatter, network, heatmap, horizontal bar |
+| `@uploop-vibe/vibe-charts` | 19 SVG chart types — line, bar, pie, area, scatter, radar, funnel, sankey, stock, heatmap, treemap, wordcloud, and more |
 | `@uploop-vibe/vibe-cli` | CLI for on-demand UI generation, MCP server for AI agent tooling (9 tools) |
 | `@uploop-vibe/vibe-devutils` | Inspector, debugger, diff viewer, manifest serializer — DevX for humans & AI |
 
@@ -111,18 +111,17 @@ Every iteration is a pure function. Every graph is versioned. Every transform is
 | **DataViz** | 4 | Sparkline, Gauge, StatsCard, TrendIndicator |
 | **Button** | 1 | 8 variants × 5 sizes × icon × loading × animation |
 
-### Charts (vibe-charts) — 8 Types
+### Charts (vibe-charts) u2014 19 Types
 
-| Type | Use Case |
-|------|----------|
-| LineChart | Time-series trends, multi-series |
-| BarChart | Categorical comparison (vertical + horizontal) |
-| HorizontalBarChart | Rankings, top-N lists |
-| PieChart | Composition, donut charts |
-| AreaChart | Volume over time, stacked areas |
-| ScatterPlot | Correlation, bubble charts |
-| NetworkGraph | Node-edge graphs, interconnections |
-| Heatmap | Color-coded matrix, risk grids |
+| Category | Types |
+|----------|-------|
+| **Trend & Time** | LineChart, AreaChart, StockChart |
+| **Comparison** | BarChart, HorizontalBarChart, BidirectionalBarChart, RadarChart, BulletChart |
+| **Composition** | PieChart, Treemap, WordCloud |
+| **Flow & Process** | FunnelChart, SankeyChart, WaterfallChart |
+| **Distribution** | ScatterPlot, Heatmap |
+| **Relation** | NetworkGraph |
+| **Gauge & Combo** | GaugeChart, ComboChart |
 
 ## Docs
 

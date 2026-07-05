@@ -1,6 +1,6 @@
 # @uploop-vibe/vibe-charts
 
-**SVG chart components** for dashboards and data visualization. Built on Uploop's `component()` pattern — every chart is a typed graph node with `mount()`, `describe()`, and `loop.send()`.
+**19 SVG chart components** for dashboards and data visualization. Deeply integrated with UploopJS — every chart is a reactive HyperGraph node using @uploop/core loops, @uploop/css theming, and state machines for interaction.
 
 ## Install
 
@@ -8,126 +8,92 @@
 pnpm add @uploop-vibe/vibe-charts
 ```
 
-## Chart Types (10)
+## Chart Types (19)
 
-| Chart | Use Case | Key Props |
-|-------|----------|-----------|
-| **LineChart** | Time-series trends, multi-series comparison | `data`, `labels`, `showDots`, `targetLine`, `yMin/yMax` |
-| **BarChart** | Categorical comparison, rankings, negative values | `data`, `labels`, `horizontal`, `perBarColors`, `yMin` |
-| **HorizontalBarChart** | Rankings, top-N lists (convenience wrapper) | `data`, `labels` (auto-horizontal) |
-| **PieChart** | Composition, share-of-total | `data`, `donut`, `showLegend: 'side'` |
-| **AreaChart** | Volume over time, stacked trends | `data`, `stacked`, `opacity`, `showDots` |
-| **ScatterPlot** | Correlation, XY positioning, bubble size | `data` (x,y,r objects), `quadrants` |
-| **NetworkGraph** | Node-edge graphs, interconnections | `nodes`, `edges`, `layout` (circular/grid/manual) |
-| **Heatmap** | Color-coded matrix, risk grids, correlation | `data` (2D array), `rowLabels`, `colLabels`, `discreteLevels` |
-| **GaugeChart** 🆕 | Semi-circle gauge, risk scores, KPI dials | `value`, `max`, `segments`, `label`, `sub` |
-| **ComboChart** 🆕 | Stacked bars + line overlay, dual-axis | `sectors`, `quarters`, `line`, `lineColor` |
+### Trend & Time
+| Chart | Use Case |
+|-------|----------|
+| LineChart | Time-series, multi-series, target lines |
+| AreaChart | Volume over time, stacked areas |
+| StockChart | OHLC/candlestick, volume bars, MA overlay |
 
-All charts are **inline SVG** — no canvas, no external dependencies.
+### Comparison
+| Chart | Use Case |
+|-------|----------|
+| BarChart | Vertical/horizontal, grouped |
+| HorizontalBarChart | Rankings, top-N lists |
+| BidirectionalBarChart | Population pyramid, back-to-back |
+| RadarChart | Multi-dimensional comparison |
+| BulletChart | KPI vs target with performance bands |
 
-## Quick Start
+### Composition
+| Chart | Use Case |
+|-------|----------|
+| PieChart | Donut/pie, side legend |
+| Treemap | Hierarchical area, squarified layout |
+| WordCloud | Text frequency visualization |
+
+### Flow & Process
+| Chart | Use Case |
+|-------|----------|
+| FunnelChart | Conversion/loss stages with drop rates |
+| SankeyChart | Flow magnitude between nodes |
+| WaterfallChart | Cumulative positive/negative contributions |
+
+### Distribution & Relation
+| Chart | Use Case |
+|-------|----------|
+| ScatterPlot | XY correlation, bubble size |
+| Heatmap | Color-coded matrix, risk grids |
+| NetworkGraph | Node-edge graphs, force layout |
+
+### Gauge & Combo
+| Chart | Use Case |
+|-------|----------|
+| GaugeChart | Semi-circle dial, risk scores, KPI dials |
+| ComboChart | Stacked bars + line overlay, dual-axis |
+
+## Uploop Integration
+
+Every chart is a full Uploop component:
 
 ```js
-import { LineChart, BarChart, PieChart } from '@uploop-vibe/vibe-charts'
+import { LineChart } from '@uploop-vibe/vibe-charts'
 
-// Line chart
-const line = LineChart.create({
+const chart = LineChart.create({
   data: [10, 25, 15, 40, 30],
   labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5'],
   title: 'Revenue',
-  showDots: true,
+  theme: { /* override CSS variables */ },
+  palette: ['#646cff', '#40c057', '#fab005'],
 })
-line.mount(document.getElementById('chart1'))
 
-// Bar chart
-const bar = BarChart.create({
-  data: [
-    { label: 'VCB', value: 12.5 },
-    { label: 'BIDV', value: 9.8 },
-    { label: 'CTG', value: 10.2 },
-  ],
-  title: 'CAR by Bank',
-  color: 'primary',
-})
-bar.mount(document.getElementById('chart2'))
+chart.mount(document.getElementById('chart'))
 
-// Pie chart
-const pie = PieChart.create({
-  data: [
-    { label: 'Loans', value: 65 },
-    { label: 'Securities', value: 20 },
-    { label: 'Cash', value: 15 },
-  ],
-  donut: true,
-  title: 'Asset Allocation',
-})
-pie.mount(document.getElementById('chart3'))
-```
+// Reactive updates via loop
+chart.loop.send('setData', [12, 28, 18, 42, 33])
 
-## Dynamic Updates
+// Interaction state machine
+chart.loop.send('hover', 2)    // highlight point 2
+chart.loop.send('select', 0)   // select point 0
+chart.loop.send('resize', { width: 800, height: 400 })
 
-```js
-const chart = LineChart.create({ data: [1, 2, 3], labels: ['A', 'B', 'C'] })
-chart.mount(el)
-
-// Update data
-chart.loop.send('setData', [4, 5, 6, 7])
-
-// Reconfigure
-chart.loop.send('configure', { title: 'Updated', showDots: false })
-
-// Inspect (AI-readable)
+// AI-readable manifest
 const manifest = chart.describe()
+// { kind: 'uploop-vibe.chart', dataShape: 'number[]', interaction: 'hovered', ... }
+
+// Theming via @uploop/css tokens
+// CSS: --vibe-chart-color-0: #ff6b6b; --vibe-chart-title-size: 16px;
 ```
 
-## Heatmap
+## Customization
 
-```js
-import { Heatmap } from '@uploop-vibe/vibe-charts'
-
-const heat = Heatmap.create({
-  data: [
-    [0.12, 0.05, 0.08],
-    [0.03, 0.01, 0.02],
-    [0.09, 0.15, 0.11],
-  ],
-  rowLabels: ['Credit Risk', 'Market Risk', 'Operational Risk'],
-  colLabels: ['Q1', 'Q2', 'Q3'],
-  title: 'Risk Heatmap',
-  colorScale: ['#15803d', '#ca8a04', '#b91c1c'],  // green→yellow→red
-})
-heat.mount(el)
-```
-
-## Network Graph
-
-```js
-import { NetworkGraph } from '@uploop-vibe/vibe-charts'
-
-const graph = NetworkGraph.create({
-  nodes: [
-    { id: 'VCB', label: 'Vietcombank', size: 20 },
-    { id: 'BIDV', label: 'BIDV', size: 18 },
-    { id: 'CTG', label: 'CTG', size: 16 },
-  ],
-  edges: [
-    { from: 'VCB', to: 'BIDV', weight: 0.8 },
-    { from: 'VCB', to: 'CTG', weight: 0.6 },
-  ],
-  layout: 'circular',
-})
-graph.mount(el)
-```
-
-## Integration with Vibe DataViz
-
-Vibe core also includes lightweight inline charts for KPI cards:
-
-```js
-import { Sparkline, Gauge, StatsCard, TrendIndicator } from '@uploop-vibe/vibe'
-```
-
-Use `vibe-charts` for full-page analytical charts. Use `vibe` DataViz for compact KPI summaries.
+All charts support:
+- **CSS variable theming** — fonts, colors, sizes via @uploop/css design tokens
+- **Custom palettes** — per-chart or global color arrays
+- **ResizeObserver** — auto-resize via `autoResize(chart, container)`
+- **Interaction states** — idle, hovered, selected, zoomed
+- **Accessibility** — semantic SVG with role="img" and aria-labels
 
 ## License
 
