@@ -1,4 +1,13 @@
-// ─── @uploop-vibe/vibe-charts — Public API ──────────────────
+// 25 chart types. Deeply integrated with @uploop/css, @uploop/schema, @uploop/core.
+//
+// Foundation:
+export { createChart, esc, formatNumber, niceTicks, svgWrap, gridLines, yAxisLabels, xAxisLabels, paletteColor, lightenColor, darkenColor, alphaColor, contrastText, autoResize, buildChartTheme, applyChartTheme } from './chart-base.js'
+export { chartSchemas, getChartSchema, listChartSchemas } from './chart-schema.js'
+
+//   createChart, esc, formatNumber, niceTicks, svgWrap, gridLines,
+//   yAxisLabels, xAxisLabels, paletteColor, autoResize
+//   chartSchemas, getChartSchema, listChartSchemas
+
 // 25 chart types for dashboards and data visualization.
 
 export { LineChart } from './line-chart.js'
