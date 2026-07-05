@@ -41,7 +41,7 @@ export const SankeyChart = component('VibeSankeyChart', {
     const pad = { top: title ? 36 : 16, bottom: 16, left: 16, right: 16 }
     const availableW = w - pad.left - pad.right
     const availableH = h - pad.top - pad.bottom
-    const colWidth = availableW / Math.max(1, columnCount - 1)
+    const colWidth = availableW / Math.max(1, columnCount)
 
     const nodeMap = new Map()
     // Group nodes by layer

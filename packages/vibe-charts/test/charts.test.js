@@ -106,7 +106,7 @@ describe.runIf(importsOk)("New charts render SVG", () => {
 
 // ── Structural tests (always run) ─────────────────────────────
 
-describe("charts index exports all 19 types", () => {
+describe("charts index exports all 25 types", () => {
   it("exports every expected chart", async () => {
     const mod = await import("../src/index.js");
     const expected = [
@@ -116,12 +116,14 @@ describe("charts index exports all 19 types", () => {
       "RadarChart", "FunnelChart", "WaterfallChart",
       "SankeyChart", "StockChart", "BidirectionalBarChart",
       "Treemap", "WordCloud", "BulletChart",
+      "Histogram", "BoxPlot", "Sunburst",
+      "DualAxesChart", "RoseChart", "RadialBarChart",
     ];
     for (const name of expected) {
       expect(mod[name], name).toBeDefined();
     }
     const exportCount = Object.keys(mod).filter(k => k !== "default").length;
-    expect(exportCount).toBeGreaterThanOrEqual(19);
+    expect(exportCount).toBeGreaterThanOrEqual(25);
   });
 });
 
@@ -130,6 +132,8 @@ describe("chart modules have create + view", () => {
     "radar-chart.js", "funnel-chart.js", "waterfall-chart.js",
     "sankey-chart.js", "stock-chart.js", "bidirectional-bar.js",
     "treemap.js", "wordcloud.js", "bullet-chart.js",
+    "histogram.js", "box-plot.js", "sunburst.js",
+    "dual-axes-chart.js", "rose-chart.js", "radial-bar-chart.js",
     "chart-base.js",
   ];
 
