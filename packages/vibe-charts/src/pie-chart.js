@@ -23,7 +23,7 @@ export const PieChart = component('VibePieChart', {
   view(state) {
     const { data, width, height, donut, donutWidth, showLabels, showLegend, title } = state
     const w = width, h = height
-    const cx = w / 2, cy = h / 2
+    let cx = w / 2, cy = h / 2
     const radius = Math.min(w, h) / 2 - 10
     const innerRadius = donut ? radius - donutWidth : 0
 

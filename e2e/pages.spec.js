@@ -323,3 +323,134 @@ test.describe("Error resilience", () => {
     expect(sidebarTextAfter).toContain("Navigation");
   });
 });
+
+test.describe("Charts Demo", () => {
+  test("should load without JS errors", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    // Allow time for chart mounting
+    await page.waitForTimeout(1000);
+    expect(errors).toEqual([]);
+  });
+
+  test("should render sidebar with chart categories", async ({ page }) => {
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.locator(".sidebar")).toContainText("Trend");
+    await expect(page.locator(".sidebar")).toContainText("Comparison");
+    await expect(page.locator(".sidebar")).toContainText("Composition");
+  });
+
+  test("should render first chart heading", async ({ page }) => {
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+    // First chart should be LineChart
+    const h1 = page.locator(".main h1");
+    await expect(h1).toBeVisible();
+    const text = await h1.textContent();
+    expect(text).toBeTruthy();
+  });
+
+  test("clicking sidebar chart switches demo", async ({ page }) => {
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+
+    // Click BarChart in sidebar
+    const barBtn = page.locator(".sidebar button").filter({ hasText: "BarChart" }).first();
+    await barBtn.click();
+    await page.waitForTimeout(500);
+
+    // Heading should change to BarChart
+    const h1 = page.locator(".main h1");
+    await expect(h1).toContainText("BarChart");
+  });
+
+  test("should show code snippet", async ({ page }) => {
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(page.locator(".code-block")).toBeVisible();
+    await expect(page.locator(".code-block")).toContainText("create");
+  });
+});
+
+test.describe("Dashboard Demo", () => {
+  test("should load without JS errors", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    expect(errors).toEqual([]);
+  });
+
+  test("should render KPI cards", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    await expect(page.locator("body")).toContainText("Revenue");
+    await expect(page.locator("body")).toContainText("Active Users");
+    await expect(page.locator("body")).toContainText("Churn Rate");
+    await expect(page.locator("body")).toContainText("NPS Score");
+  });
+
+  test("should have tab navigation", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(page.locator("nav")).toContainText("overview");
+    await expect(page.locator("nav")).toContainText("analytics");
+    await expect(page.locator("nav")).toContainText("performance");
+  });
+
+  test("clicking analytics tab switches content without crash", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+
+    // Click analytics tab
+    const analyticsTab = page.locator("nav span").filter({ hasText: "analytics" }).first();
+    await analyticsTab.click();
+    await page.waitForTimeout(1000);
+
+    // Should show analytics content (Radar chart heading)
+    await expect(page.locator("body")).toContainText("Team Performance");
+  });
+
+  test("clicking performance tab switches content without crash", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+
+    const perfTab = page.locator("nav span").filter({ hasText: "performance" }).first();
+    await perfTab.click();
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator("body")).toContainText("Risk Heatmap");
+  });
+
+  test("should have back home link", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(page.locator('a[href="/"]')).toBeVisible();
+  });
+});
+
+test.describe("Error resilience extended", () => {
+  test("charts-demo should not have 500 errors", async ({ page }) => {
+    const response = await page.goto("/charts-demo/");
+    if (response) expect(response.status()).toBeLessThan(400);
+  });
+
+  test("dashboard-demo should not have 500 errors", async ({ page }) => {
+    const response = await page.goto("/dashboard-demo/");
+    if (response) expect(response.status()).toBeLessThan(400);
+  });
+});
