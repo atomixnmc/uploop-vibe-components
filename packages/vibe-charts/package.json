@@ -11,7 +11,7 @@
   "scripts": { "test": "vitest" },
   "dependencies": {
     "@uploop-vibe/vibe": "workspace:*",
-    "@uploop/core": "link:../../../uploopjs/packages/core",
-    "@uploop/html": "link:../../../uploopjs/packages/html"
+    "@uploop/core": "git+https://github.com/atomixnmc/uploopjs.git#main&path:packages/core",
+    "@uploop/html": "git+https://github.com/atomixnmc/uploopjs.git#main&path:packages/html"
   }
 }
