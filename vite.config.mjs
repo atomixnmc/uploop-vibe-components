@@ -26,6 +26,10 @@ export default defineConfig(({ mode }) => ({
       "@uploop/flows": path.join(uploopRoot, "flows/src/index.js"),
       "@uploop-vibe/vibe": path.join(vibeRoot, "vibe/src/index.js"),
       "@uploop-vibe/vibe-ai": path.join(vibeRoot, "vibe-ai/src/index.js"),
+      "@uploop-vibe/vibe-charts": path.join(
+        vibeRoot,
+        "vibe-charts/src/index.js",
+      ),
     },
   },
   build: {
@@ -37,6 +41,8 @@ export default defineConfig(({ mode }) => ({
         showcase: resolve(examplesRoot, "showcase/index.html"),
         "vibe-ai": resolve(examplesRoot, "vibe-ai/index.html"),
         "ifs-demo": resolve(examplesRoot, "ifs-demo/index.html"),
+        "charts-demo": resolve(examplesRoot, "charts-demo/index.html"),
+        "dashboard-demo": resolve(examplesRoot, "dashboard-demo/index.html"),
       },
     },
   },
