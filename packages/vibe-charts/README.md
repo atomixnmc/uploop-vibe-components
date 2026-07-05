@@ -8,18 +8,20 @@
 pnpm add @uploop-vibe/vibe-charts
 ```
 
-## Chart Types (8)
+## Chart Types (10)
 
 | Chart | Use Case | Key Props |
 |-------|----------|-----------|
-| **LineChart** | Time-series trends, multi-series comparison | `data`, `labels`, `showDots`, `smooth` |
-| **BarChart** | Categorical comparison, rankings | `data`, `labels`, `horizontal`, `barGap` |
+| **LineChart** | Time-series trends, multi-series comparison | `data`, `labels`, `showDots`, `targetLine`, `yMin/yMax` |
+| **BarChart** | Categorical comparison, rankings, negative values | `data`, `labels`, `horizontal`, `perBarColors`, `yMin` |
 | **HorizontalBarChart** | Rankings, top-N lists (convenience wrapper) | `data`, `labels` (auto-horizontal) |
-| **PieChart** | Composition, share-of-total | `data`, `donut`, `innerRadius` |
+| **PieChart** | Composition, share-of-total | `data`, `donut`, `showLegend: 'side'` |
 | **AreaChart** | Volume over time, stacked trends | `data`, `stacked`, `opacity`, `showDots` |
 | **ScatterPlot** | Correlation, XY positioning, bubble size | `data` (x,y,r objects), `quadrants` |
 | **NetworkGraph** | Node-edge graphs, interconnections | `nodes`, `edges`, `layout` (circular/grid/manual) |
-| **Heatmap** | Color-coded matrix, risk grids, correlation | `data` (2D array), `rowLabels`, `colLabels`, `colorScale` |
+| **Heatmap** | Color-coded matrix, risk grids, correlation | `data` (2D array), `rowLabels`, `colLabels`, `discreteLevels` |
+| **GaugeChart** 🆕 | Semi-circle gauge, risk scores, KPI dials | `value`, `max`, `segments`, `label`, `sub` |
+| **ComboChart** 🆕 | Stacked bars + line overlay, dual-axis | `sectors`, `quarters`, `line`, `lineColor` |
 
 All charts are **inline SVG** — no canvas, no external dependencies.
 

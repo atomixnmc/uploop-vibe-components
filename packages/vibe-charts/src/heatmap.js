@@ -19,6 +19,9 @@ export const Heatmap = component('VibeHeatmap', {
     showValues: true,
     valueFormat: '',
     cellRadius: 2,
+    // ── Discrete levels mode (for risk grids) ──
+    discreteLevels: false, // true = use levelText labels, not gradient
+    levelText: [],         // string[] — text labels for each level (e.g., ['Rất thấp','Thấp','TB','Cao','Rất cao'])
   },
 
   update: {
@@ -27,7 +30,8 @@ export const Heatmap = component('VibeHeatmap', {
   },
 
   view(state) {
-    const { data, rowLabels, colLabels, width, height, padding, title, colorScale, showValues, valueFormat, cellRadius } = state
+    const { data, rowLabels, colLabels, width, height, padding, title, colorScale, showValues, valueFormat, cellRadius,
+      discreteLevels, levelText } = state
     const w = width, h = height, p = padding
     const colors = colorScale && colorScale.length ? colorScale : DEFAULT_COLORS
 
@@ -52,6 +56,11 @@ export const Heatmap = component('VibeHeatmap', {
 
     // Color interpolation
     function colorFor(value) {
+      if (discreteLevels) {
+        // Use value as index into colorScale
+        const idx = Math.min(Math.max(Math.round(value) || 0, 0), colors.length - 1)
+        return colors[idx]
+      }
       const t = (value - minVal) / range   // 0→1
       const idx = t * (colors.length - 1)
       const lo = Math.floor(idx)
@@ -77,9 +86,11 @@ export const Heatmap = component('VibeHeatmap', {
         svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(cellW - 2).toFixed(1)}" height="${(cellH - 2).toFixed(1)}" rx="${cellRadius}" fill="${fill}" opacity="0.9"/>`
 
         if (showValues) {
-          const fmt = valueFormat ? formatWith(val, valueFormat) : String(Math.round(val * 10) / 10)
+          const txt = discreteLevels && levelText.length
+            ? levelText[Math.min(Math.round(val) || 0, levelText.length - 1)]
+            : (valueFormat ? formatWith(val, valueFormat) : String(Math.round(val * 10) / 10))
           const textColor = luminance(fill) > 0.5 ? '#1a1a2e' : '#ffffff'
-          svg += `<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="500" fill="${textColor}">${esc(fmt)}</text>`
+          svg += `<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="500" fill="${textColor}">${esc(txt)}</text>`
         }
       }
     }

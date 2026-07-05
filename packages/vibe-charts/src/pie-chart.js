@@ -11,7 +11,7 @@ export const PieChart = component('VibePieChart', {
     donut: false,        // true = donut chart, false = pie
     donutWidth: 30,
     showLabels: true,
-    showLegend: false,
+    showLegend: false,   // 'below' | 'side' | false
     title: '',
   },
 
@@ -85,7 +85,16 @@ export const PieChart = component('VibePieChart', {
     }
 
     // Legend
-    if (showLegend) {
+    if (showLegend === 'side') {
+      // Inline legend rendered as HTML outside SVG for side-by-side layout
+      let legHtml = items.map((item, i) => {
+        const c = item.color || getColor(i)
+        const pct = total > 0 ? Math.round((item.value || 0) / total * 100) : 0
+        return `<div style="display:flex;align-items:center;gap:0.35rem;font-size:0.73rem;padding:0.15rem 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c};flex-shrink:0;"></span><span style="flex:1;">${esc(item.label || '')}</span><span style="font-weight:600;">${formatNumber(item.value)}</span><span style="color:var(--vibe-color-mutedFg);font-size:0.65rem;">(${pct}%)</span></div>`
+      }).join('')
+      return svg + '</svg>' + `<div style="margin-top:0.5rem;">${legHtml}</div>`
+    }
+    if (showLegend === 'below' || showLegend === true) {
       svg += items.map((item, i) => {
         const c = item.color || getColor(i)
         const y = h + 16 + i * 22
