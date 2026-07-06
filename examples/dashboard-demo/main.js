@@ -134,7 +134,7 @@ const Dashboard = component('VibeDashboard', {
           </div>
           <nav style="display:flex;gap:1.5rem;">
             ${tabs.map(t => html`
-              <span @click=${(e) => { Dashboard._loop.send('setTab', t); }}
+              <span data-tab="${t}"
                 style="cursor:pointer;font-size:0.82rem;color:${state.activeTab===t?'#646cff':'#888'};font-weight:${state.activeTab===t?600:400};text-transform:capitalize;">${t}</span>
             `)}
           </nav>
@@ -145,15 +145,24 @@ const Dashboard = component('VibeDashboard', {
         </div>
       </div>
     `
-  },
-
   mounted(el) {
-    Dashboard._el = el
+    // Capture loop for updates
+    if (!Dashboard._loop && this.loop) {
+      Dashboard._loop = this.loop
+    }
+
+    // DOM delegation for tab clicks (avoids timing issue with @click)
+    el.addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-tab]')
+      if (tab && Dashboard._loop) {
+        Dashboard._loop.send('setTab', tab.dataset.tab)
+      }
+    })
 
     // Mount overview charts initially
     mountChartsForTab('overview')
 
-    // Listen for tab changes via loop subscription
+    // Listen for tab changes
     if (Dashboard._loop) {
       Dashboard._loop.subscribe((s) => {
         if (s.activeTab && s.activeTab !== Dashboard._lastTab) {
@@ -163,7 +172,6 @@ const Dashboard = component('VibeDashboard', {
       })
     }
   },
-})
 
 function mountChartsForTab(tab) {
   if (tab === 'overview') {
