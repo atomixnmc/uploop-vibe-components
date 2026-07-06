@@ -145,6 +145,8 @@ const Dashboard = component('VibeDashboard', {
         </div>
       </div>
     `
+  },
+
   mounted(el) {
     // Capture loop for updates
     if (!Dashboard._loop && this.loop) {
@@ -172,6 +174,7 @@ const Dashboard = component('VibeDashboard', {
       })
     }
   },
+})
 
 function mountChartsForTab(tab) {
   if (tab === 'overview') {

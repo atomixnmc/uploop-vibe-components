@@ -454,3 +454,31 @@ test.describe("Error resilience extended", () => {
     if (response) expect(response.status()).toBeLessThan(400);
   });
 });
+
+test.describe("Build validation", () => {
+  test("production build should succeed", async ({ page }) => {
+    // Verify build output exists by loading each page
+    const pages = ["/", "/showcase/", "/vibe-ai/", "/ifs-demo/", "/charts-demo/", "/dashboard-demo/"];
+    for (const path of pages) {
+      const response = await page.goto(path);
+      expect(response.status()).toBeLessThan(400);
+    }
+  });
+
+  test("dashboard demo has valid structure", async ({ page }) => {
+    await page.goto("/dashboard-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    // Verify header renders (no syntax error crash)
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator("h1")).toContainText("Analytics");
+  });
+
+  test("charts demo has valid structure", async ({ page }) => {
+    await page.goto("/charts-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.locator(".main h1")).toBeVisible();
+  });
+});
