@@ -308,22 +308,22 @@ const IFSDemo = component("IFSDemo", {
           },
         });
 
-        IFSDemo.loop.send("setIterations", currentState.iterations);
-        IFSDemo.loop.send("setRunning", false);
-        IFSDemo.loop.send("setConverged", result.success);
+        IFSDemo._loop.send("setIterations", currentState.iterations);
+        IFSDemo._loop.send("setRunning", false);
+        IFSDemo._loop.send("setConverged", result.success);
       }, 50);
       return state;
     },
   },
 
   mount: function (el) {
-    var self = this;
+    // Capture loop reference
+    if (!IFSDemo._loop && this.loop) {
+      IFSDemo._loop = this.loop;
+    }
     window.__ifsSelect = function (idx) {
-      self.loop.send("selectPreset", idx);
+      if (IFSDemo._loop) IFSDemo._loop.send("selectPreset", idx);
     };
-    setTimeout(function () {
-      self.loop.send("runLoop");
-    }, 100);
   },
 
   view: function (state) {
@@ -413,9 +413,13 @@ const IFSDemo = component("IFSDemo", {
   },
 });
 
-IFSDemo.mount(document.getElementById("app"));
+const ifsInst = IFSDemo.mount(document.getElementById("app"));
+IFSDemo._loop = ifsInst.loop;
 
 // Global handler for Run button
 window.__ifsRun = function () {
-  IFSDemo.loop.send("runLoop");
+  IFSDemo._loop.send("runLoop");
 };
+
+// Initial trigger
+setTimeout(() => IFSDemo._loop.send("runLoop"), 100);
