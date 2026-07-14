@@ -14,10 +14,10 @@
   "scripts": { "test": "vitest" },
   "dependencies": {
       "@uploop/core": "link:../../../uploopjs/packages/core",
-          "@uploop/html": "link:../../../uploopjs/packages/html",
-          "@uploop/css": "link:../../../uploopjs/packages/css",
-          "@uploop/store": "link:../../../uploopjs/packages/store",
-          "@uploop/flows": "link:../../../uploopjs/packages/flows",
-          "@uploop/schema": "link:../../../uploopjs/packages/schema"
+      "@uploop/html": "link:../../../uploopjs/packages/html",
+      "@uploop/css": "link:../../../uploopjs/packages/css",
+      "@uploop/store": "link:../../../uploopjs/packages/store",
+      "@uploop/flows": "link:../../../uploopjs/packages/flows",
+      "@uploop/schema": "link:../../../uploopjs/packages/schema"
     }
 }

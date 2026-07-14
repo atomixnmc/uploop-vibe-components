@@ -1,6 +1,10 @@
-// ─── Media: Image, Video, Audio, Figure, AvatarGroup ─────────
+// ─── Media: Image, Video, Audio, Figure, AvatarGroup, Carousel, AudioPlayer, VideoPlayer, Paint ─────────
 
 import { component } from '@uploop/html'
+export { ImageCarousel } from './carousel.js'
+export { AudioPlayer } from './audio-player.js'
+export { VideoPlayer } from './video-player.js'
+export { Paint } from './paint.js'
 
 export const Image = component('VibeImage', {
   state: { src: '', alt: '', fit: 'cover', radius: 'md', width: 'auto', height: 'auto', fallback: '', caption: '', loading: 'lazy' },

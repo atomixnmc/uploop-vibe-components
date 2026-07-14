@@ -3,8 +3,7 @@
 
 // ── Layout (12) ──────────────────────────────────────────────
 
-import { Container, Grid, Stack, Flex, Spacer, Divider } from '../layout/grid.js'
-import { Box, Center, AspectRatio, Wrap, SkipNav, BackToTop } from './layout/basics.js'
+import { Container, Grid, Stack, Flex, Spacer, Divider, Box, Center, AspectRatio, Wrap, SkipNav, BackToTop } from '../layout/index.js'
 
 export {
   Container, Grid, Stack, Flex, Spacer, Divider,
@@ -80,13 +79,13 @@ export {
   Heading, Text, Label, Caption, Highlight, Code, BlockCode, Kbd, Blockquote,
 }
 
-// ── Media (6) ────────────────────────────────────────────────
+// ── Media (10) ───────────────────────────────────────────────
 
 import { Icon } from './feedback.js'
-import { Image, Video, Audio, Figure, AvatarGroup } from './media/media.js'
+import { Image, Video, Audio, Figure, AvatarGroup, ImageCarousel, AudioPlayer, VideoPlayer, Paint } from './media/media.js'
 
 export {
-  Icon, Image, Video, Audio, Figure, AvatarGroup,
+  Icon, Image, Video, Audio, Figure, AvatarGroup, ImageCarousel, AudioPlayer, VideoPlayer, Paint,
 }
 
 // ── Utility (5) ──────────────────────────────────────────────
@@ -109,7 +108,8 @@ export {
 
 import { DatePicker, DateRangePicker } from './datepicker.js'
 import { Button } from './button.js'
-export { Button, DatePicker, DateRangePicker }
+import { VibeForm } from './form.js'
+export { Button, DatePicker, DateRangePicker, VibeForm }
 
 // ── Component Registry (for AI intent resolution) ────────────
 
@@ -137,14 +137,16 @@ export const componentRegistry = {
   Drawer, Sheet, Popover, HoverCard, Lightbox, FullscreenOverlay,
   // Typography (10)
   Heading, Text, Label, Caption, Highlight, Code, BlockCode, Kbd, Blockquote,
-  // Media (6)
-  Icon, Image, Video, Audio, Figure, AvatarGroup,
+  // Media (10)
+  Icon, Image, Video, Audio, Figure, AvatarGroup, ImageCarousel, AudioPlayer, VideoPlayer, Paint,
   // Utility (5)
   Portal, Transition, FocusTrap, ClickOutside, LazyLoad,
   // DataViz (4)
   Sparkline, Gauge, StatsCard, TrendIndicator,
   // Button
   Button,
+  // Form
+  VibeForm,
 }
 
 /**
@@ -172,10 +174,11 @@ export function listComponents(category) {
     feedback:      ['Toast','Skeleton','Progress','Alert','Notification','Banner','Spinner','EmptyState','ErrorState','LoadingOverlay','Result','Spotlight'],
     overlay:       ['Modal','Dialog','Tooltip','Drawer','Sheet','Popover','HoverCard','Lightbox','FullscreenOverlay'],
     typography:    ['Heading','Text','Label','Caption','Highlight','Code','BlockCode','Kbd','Blockquote'],
-    media:         ['Icon','Image','Video','Audio','Figure','AvatarGroup'],
+    media:         ['Icon','Image','Video','Audio','Figure','AvatarGroup','ImageCarousel','AudioPlayer','VideoPlayer','Paint'],
     utility:       ['Portal','Transition','FocusTrap','ClickOutside','LazyLoad'],
     dataviz:       ['Sparkline','Gauge','StatsCard','TrendIndicator'],
     button:        ['Button'],
+    form:          ['VibeForm'],
   }
   return cats[category] || all.filter(n => all.includes(n) && cats[category]?.includes(n))
 }

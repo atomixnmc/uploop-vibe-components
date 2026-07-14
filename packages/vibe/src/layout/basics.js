@@ -1,4 +1,4 @@
-// ─── Layout: Box, Center, AspectRatio, Wrap ──────────────────
+// ─── @uploop-vibe/vibe Layout Basics — Box, Center, AspectRatio, Wrap ──
 
 import { component } from '@uploop/html'
 

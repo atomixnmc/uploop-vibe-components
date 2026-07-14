@@ -34,11 +34,13 @@ export {
   componentRegistry,
   getComponent,
   listComponents,
+  VibeForm,
 } from './components/index.js'
 
 // ── Layout ───────────────────────────────────────────────────
 
 export {
   Container, Grid, Stack, Flex, Spacer, Divider,
+  Box, Center, AspectRatio, Wrap, SkipNav, BackToTop,
   pageLayouts, createPage,
 } from './layout/index.js'

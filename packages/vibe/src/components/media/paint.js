@@ -1,0 +1,215 @@
+// ─── Paint ────────────────────────────────────────────────
+// Ported from uploopjs examples/paint/main.js
+//
+// The canvas lives OUTSIDE the view template. On re-render,
+// innerHTML destroys it. The persistent resource system handles
+// this via save/restore.
+//
+// Canvas restore sets the container's CSS background-image
+// to the saved dataUrl SYNCHRONOUSLY, before the async
+// Image.onload fires. This prevents a white flash between
+// canvas creation and image decode. On image load, the CSS
+// background is cleared and the canvas takes over.
+
+import { component } from '@uploop/html'
+
+export const Paint = component('VibePaint', {
+  state: {
+    color: '#646cff',
+    size: 8,
+    tool: 'brush',
+  },
+
+  update: {
+    setColor: (s, color) => ({ ...s, color }),
+    setSize: (s, size) => ({ ...s, size }),
+    setTool: (s, tool) => ({ ...s, tool }),
+    clear: () => {
+      const c = document.getElementById('paint-canvas');
+      if (c) {
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, c.width, c.height);
+      }
+      return { color: '#646cff', size: 8, tool: 'brush' };
+    },
+  },
+
+  view(state) {
+    const toolActive = (t) => state.tool === t
+      ? 'border:2px solid #646cff;background:#eef;'
+      : 'border:2px solid #ddd;background:white;';
+
+    return `<div class="vibe-paint" style="font-family:sans-serif;padding:1rem;user-select:none;">
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
+        <input id="paint-color-picker" type="color" value="${state.color}" style="width:40px;height:40px;border:none;cursor:pointer;padding:0;" />
+        <input id="paint-size-slider" type="range" min="2" max="30" value="${state.size}" style="width:100px;" />
+        <span style="font-size:0.8rem;color:#666;">${state.size}px</span>
+        <button id="paint-btn-brush" data-up-event="click:setTool" data-tool="brush" style="padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.85rem;${toolActive('brush')}">\u270F\uFE0F Brush</button>
+        <button id="paint-btn-eraser" data-up-event="click:setTool" data-tool="eraser" style="padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.85rem;${toolActive('eraser')}">\uD83E\uDDF9 Eraser</button>
+        <span style="flex:1;"></span>
+        <button data-up-event="click:clear" style="padding:0.3rem 0.7rem;border:1px solid #ff4444;border-radius:6px;cursor:pointer;background:#fff0f0;color:#cc0000;font-size:0.85rem;">\uD83D\uDDD1 Clear</button>
+      </div>
+      <div id="paint-container" style="border:1px solid #ccc;border-radius:8px;overflow:hidden;background:white;background-size:cover;touch-action:none;"></div>
+    </div>`;
+  },
+
+  mount(el, ctx) {
+    let activeListeners = [];
+
+    function createCanvas(container) {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'paint-canvas';
+      canvas.width = 600;
+      canvas.height = 350;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.display = 'block';
+      canvas.style.cursor = 'crosshair';
+      container.appendChild(canvas);
+
+      const ctx2d = canvas.getContext('2d');
+      ctx2d.lineCap = 'round';
+      ctx2d.lineJoin = 'round';
+
+      let drawing = false;
+      let lastX = 0, lastY = 0;
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scX = canvas.width / rect.width;
+        const scY = canvas.height / rect.height;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: (cx - rect.left) * scX, y: (cy - rect.top) * scY };
+      }
+
+      function onStart(e) {
+        e.preventDefault();
+        drawing = true;
+        const p = getPos(e);
+        lastX = p.x;
+        lastY = p.y;
+      }
+
+      function onMove(e) {
+        e.preventDefault();
+        if (!drawing) return;
+        const p = getPos(e);
+        const s = Paint.loop.get();
+        ctx2d.strokeStyle = s.tool === 'eraser' ? 'white' : s.color;
+        ctx2d.lineWidth = s.size;
+        ctx2d.beginPath();
+        ctx2d.moveTo(lastX, lastY);
+        ctx2d.lineTo(p.x, p.y);
+        ctx2d.stroke();
+        lastX = p.x;
+        lastY = p.y;
+      }
+
+      function onStop(e) {
+        e.preventDefault();
+        drawing = false;
+      }
+
+      const listeners = [
+        ['mousedown', onStart],
+        ['mousemove', onMove],
+        ['mouseup', onStop],
+        ['mouseleave', onStop],
+        ['touchstart', onStart, { passive: false }],
+        ['touchmove', onMove, { passive: false }],
+        ['touchend', onStop, { passive: false }],
+      ];
+
+      for (const [ev, fn, opts] of listeners) {
+        canvas.addEventListener(ev, fn, opts);
+      }
+      activeListeners = listeners.map(([ev, fn]) => ({ ev, fn }));
+
+      return { canvas, ctx2d };
+    }
+
+    // ── Initial mount (reuse canvas if restored by resource mechanism) ──
+    const container = el.querySelector('#paint-container');
+    if (!container) return;
+    let existing = container.querySelector('#paint-canvas');
+    if (!existing) {
+      const { canvas, ctx2d } = createCanvas(container);
+      ctx2d.fillStyle = 'white';
+      ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // ── Register persistent resource ──
+    ctx.registerResource('paint-canvas', {
+      save: () => {
+        const c = document.getElementById('paint-canvas');
+        return c ? c.toDataURL() : null;
+      },
+      restore: (dataUrl) => {
+        const cont = el.querySelector('#paint-container');
+        if (!cont) return;
+        const old = cont.querySelector('#paint-canvas');
+        if (old) old.remove();
+
+        // Show saved image as container CSS background IMMEDIATELY (sync).
+        // This prevents white flash while the Image loads asynchronously.
+        if (dataUrl) {
+          cont.style.backgroundImage = `url(${dataUrl})`;
+          cont.style.backgroundSize = 'cover';
+        }
+
+        const { canvas: newCanvas, ctx2d: newCtx } = createCanvas(cont);
+
+        if (dataUrl) {
+          const img = new Image();
+          img.onload = () => {
+            newCtx.drawImage(img, 0, 0);
+            // Clear CSS background — canvas now shows the image
+            cont.style.backgroundImage = '';
+          };
+          img.src = dataUrl;
+        } else {
+          newCtx.fillStyle = 'white';
+          newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+        }
+      },
+    });
+
+    // ── Wire up toolbar controls in mount (for parameterized values) ──
+    const send = (ev, val) => Paint.loop.send(ev, val);
+
+    const colorPicker = el.querySelector('#paint-color-picker');
+    const onColor = (e) => send('setColor', e.target.value);
+    if (colorPicker) colorPicker.addEventListener('input', onColor);
+
+    const sizeSlider = el.querySelector('#paint-size-slider');
+    const onSize = (e) => send('setSize', parseInt(e.target.value));
+    if (sizeSlider) sizeSlider.addEventListener('input', onSize);
+
+    // Tool buttons handled via data-up-event with data-tool attribute
+    const onToolClick = (e) => {
+      const btn = e.target.closest('[data-tool]');
+      if (!btn) return;
+      send('setTool', btn.getAttribute('data-tool'));
+    };
+    const btnBrush = el.querySelector('#paint-btn-brush');
+    const btnEraser = el.querySelector('#paint-btn-eraser');
+    if (btnBrush) btnBrush.addEventListener('click', onToolClick);
+    if (btnEraser) btnEraser.addEventListener('click', onToolClick);
+
+    return () => {
+      for (const { ev, fn } of activeListeners) {
+        const c = document.getElementById('paint-canvas');
+        if (c) c.removeEventListener(ev, fn);
+      }
+      activeListeners = [];
+      if (colorPicker) colorPicker.removeEventListener('input', onColor);
+      if (sizeSlider) sizeSlider.removeEventListener('input', onSize);
+      if (btnBrush) btnBrush.removeEventListener('click', onToolClick);
+      if (btnEraser) btnEraser.removeEventListener('click', onToolClick);
+    };
+  },
+});
+
+export default Paint;
