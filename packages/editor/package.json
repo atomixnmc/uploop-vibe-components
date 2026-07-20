@@ -1,0 +1,24 @@
+{
+  "name": "@uploop-vibe/vibe-editor",
+  "version": "0.1.0",
+  "description": "Uploop Vibe Editor — WYSIWYG, spreadsheet, layout, and code editing components",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": { "import": "./src/index.js" },
+    "./wysiwyg": { "import": "./src/wysiwyg.js" },
+    "./code": { "import": "./src/code-editor.js" },
+    "./spreadsheet": { "import": "./src/spreadsheet.js" },
+    "./layout": { "import": "./src/layout-editor.js" }
+  },
+  "files": ["src"],
+  "scripts": { "test": "vitest" },
+  "dependencies": {
+    "@uploop/core": "link:../../../uploopjs/packages/core",
+    "@uploop/html": "link:../../../uploopjs/packages/html",
+    "@uploop/store": "link:../../../uploopjs/packages/store",
+    "@uploop/schema": "link:../../../uploopjs/packages/schema",
+    "@uploop/flows": "link:../../../uploopjs/packages/flows",
+    "@uploop-vibe/vibe": "workspace:*"
+  }
+}
