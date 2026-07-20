@@ -335,7 +335,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
         background:var(--vibe-color-surface);
         align-items:center;
       ">
-        <button class="vibe-spreadsheet-btn" data-up-event="click:addRow" style="
+        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="addRow" style="
           padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
           border:1px solid var(--vibe-color-border);
           border-radius:var(--vibe-radius-sm);
@@ -343,7 +343,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
           color:var(--vibe-color-fg);
           cursor:pointer;
         ">+ Row</button>
-        <button class="vibe-spreadsheet-btn" data-up-event="click:deleteRow" style="
+        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="deleteRow" style="
           padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
           border:1px solid var(--vibe-color-border);
           border-radius:var(--vibe-radius-sm);
@@ -351,7 +351,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
           color:var(--vibe-color-fg);
           cursor:pointer;
         ">- Row</button>
-        <button class="vibe-spreadsheet-btn" data-up-event="click:addColumn" style="
+        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="addColumn" style="
           padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
           border:1px solid var(--vibe-color-border);
           border-radius:var(--vibe-radius-sm);
@@ -359,7 +359,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
           color:var(--vibe-color-fg);
           cursor:pointer;
         ">+ Col</button>
-        <button class="vibe-spreadsheet-btn" data-up-event="click:deleteColumn" style="
+        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="deleteColumn" style="
           padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
           border:1px solid var(--vibe-color-border);
           border-radius:var(--vibe-radius-sm);
