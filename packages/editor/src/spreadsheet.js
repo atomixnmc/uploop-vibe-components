@@ -198,10 +198,10 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
     <div class="vibe-spreadsheet" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;color:#1a1a1a;background:#fff;border:1px solid #dadce0;border-radius:8px;overflow:hidden;">
       <!-- Toolbar -->
       <div style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #dadce0;background:#f8f9fa;align-items:center;">
-        <button data-up-event="click:addRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Row</button>
-        <button data-up-event="click:deleteRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Row</button>
-        <button data-up-event="click:addColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Col</button>
-        <button data-up-event="click:deleteColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Col</button>
+        <button style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;" data-up-event="click:addRow">+ Row</button>
+        <button style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;" data-up-event="click:deleteRow">- Row</button>
+        <button style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;" data-up-event="click:addColumn">+ Col</button>
+        <button style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;" data-up-event="click:deleteColumn">- Col</button>
         <span style="font-size:11px;color:#999;margin-left:8px;">${rows.length} x ${columns.length}</span>
       </div>
 
@@ -232,8 +232,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
 
                 if (isEdit) {
                   return `<td style="padding:0;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;min-width:90px;">
-                    <input data-up-prop="editValue:value" value="${esc(editValue)}"
-                      data-up-event="keydown:commitOnEnter"
+                    <input class="vibe-spreadsheet-input" value="${esc(editValue)}"
                       style="width:100%;border:none;outline:none;padding:4px 8px;font-size:13px;font-family:inherit;background:transparent;color:#1a1a1a;box-sizing:border-box;" />
                   </td>`
                 }
@@ -250,10 +249,29 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
   },
 
   mount(el, ctx) {
-    // Re-render on store change
-    const unsub = spreadsheetStore.subscribe(() => ctx.send('_refresh'))
+    // Re-render on data changes only (not on editValue keystrokes)
+    let prevHash = ''
+    const unsub = spreadsheetStore.subscribe((s) => {
+      const hash = JSON.stringify({ c: s.columns, r: s.rows, sel: s.selectedCell, edit: s.editingCell, sort: s.sortCol + s.sortDir })
+      if (hash !== prevHash) { prevHash = hash; ctx.send('_refresh') }
+    })
 
-    // Click: select cell
+    // Toolbar button clicks
+    el.addEventListener('click', (e) => {
+      const btn = e.target.closest('button')
+      if (!btn) return
+      const ev = btn.getAttribute('data-up-event')
+      if (!ev) return
+      const [_, action] = ev.split(':')
+      if (!action) return
+      const storeAction = action.split(',')[0]
+      if (['addRow','deleteRow','addColumn','deleteColumn','sortByCol'].includes(storeAction)) {
+        const args = action.split(',').slice(1).map(Number)
+        spreadsheetStore.send(storeAction, ...args)
+      }
+    })
+
+    // Cell click
     el.addEventListener('click', (e) => {
       const td = e.target.closest('[data-row][data-col]')
       if (td) {
@@ -266,6 +284,12 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
     el.addEventListener('dblclick', (e) => {
       const td = e.target.closest('[data-row][data-col]')
       if (td) spreadsheetStore.send('startEdit')
+    })
+
+    // Input: sync edit value as user types
+    el.addEventListener('input', (e) => {
+      const inp = e.target.closest('.vibe-spreadsheet-input')
+      if (inp) spreadsheetStore.send('setEditValue', inp.value)
     })
 
     // Keyboard handlers
