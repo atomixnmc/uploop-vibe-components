@@ -448,6 +448,8 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
 
     // Helper to dispatch actions (used by drag-drop handlers below)
     const updateState = (action, ...args) => ctx.send(action, ...args)
+    let _dragOverIdx = -1
+    let _importJson = ''
 
     const dropzone = el.querySelector('.vibe-layout-dropzone')
     const catalogList = el.querySelector('.vibe-layout-catalog-list')
@@ -574,6 +576,7 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
       if (!dragState) return
       const idx = getDropIndex(e.clientX, e.clientY)
       if (idx !== _dragOverIdx) {
+        _dragOverIdx = idx
         updateState('setDragOverIdx', idx)
       }
     }
@@ -614,6 +617,7 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
 
       // Cleanup
       dragState = null
+      _dragOverIdx = -1
       updateState('setDragging', null)
       updateState('setDragOverIdx', -1)
     }
@@ -658,17 +662,19 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
           layoutStore.send('clearLayout')
           updateState('deselectAll')
           return
-        case '_deleteSelected':
-          if (_selectedId) {
-            layoutStore.send('deleteItem', _selectedId)
+        case '_deleteSelected': {
+          const sel = ctx.get().selectedId
+          if (sel) {
+            layoutStore.send('deleteItem', sel)
             updateState('deselectAll')
           }
           return
+        }
         case '_refresh':
           // Store-triggered re-render — just pass through
           break
       }
-      return updateState(action, ...args)
+      return origSend(action, ...args)
     }
 
     return () => {
