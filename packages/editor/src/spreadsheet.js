@@ -1,228 +1,165 @@
-// ─── @uploop-vibe/vibe-editor VibeSpreadsheet ──────────────────
+// @uploop-vibe/vibe-editor Spreadsheet — rebuilt with uploop patterns
 //
-// Table-like grid editor with:
-//  - Click to select cell, double-click / type to edit
-//  - Column headers with click-to-sort
-//  - Simple formulas: =SUM(A1:A5), =AVG(B1:B10), =A1+B2*C3
-//  - Add / delete row and column buttons
-//  - Tab / Enter to navigate cells
-//  - getData() / setData(data) API
+// Architecture:
+//   spreadsheetStore  — @uploop/store for cell data (single source of truth)
+//   Spreadsheet       — top-level component: mounts store, toolbar, grid
+//   SpreadsheetGrid   — renders the table, handles cell click/select
+//   Each cell uses data-up-prop/data-up-event for declarative bindings
 //
-// State lives in a @uploop/store; the component subscribes for
-// reactivity and holds its own UI state (selection, editing, sort).
+// All interactions go through the store. Components subscribe reactively.
 
 import { component } from '@uploop/html'
 import { store } from '@uploop/store'
 
-// ---------------------------------------------------------------------------
-// Helpers — column letter <-> index conversion
-// ---------------------------------------------------------------------------
+// ── Column letter helpers ──────────────────────────────────
 
-/** "A"→0, "B"→1, …, "Z"→25, "AA"→26, … */
-function colToIndex(col) {
-  let n = 0
-  for (let i = 0; i < col.length; i++) {
-    n = n * 26 + (col.charCodeAt(i) - 64)
-  }
-  return n - 1
-}
+function indexToCol(i) { let s = ''; while (i >= 0) { s = String.fromCharCode(65 + (i % 26)) + s; i = Math.floor(i / 26) - 1; } return s }
 
-/** 0→"A", 1→"B", …, 25→"Z", 26→"AA", … */
-function indexToCol(idx) {
-  let n = idx + 1
-  let s = ''
-  while (n > 0) {
-    n--
-    s = String.fromCharCode(65 + (n % 26)) + s
-    n = Math.floor(n / 26)
-  }
-  return s
-}
+// ── Formula evaluator (shunting-yard) ──────────────────────
 
-/** Parse "A1" → { col: 0, row: 0 } */
-function parseCellRef(ref) {
-  const m = /^([A-Z]+)(\d+)$/i.exec(ref.trim().toUpperCase())
-  if (!m) return null
-  return { col: colToIndex(m[1]), row: parseInt(m[2], 10) - 1 }
-}
-
-/**
- * Simple arithmetic evaluator — no eval / Function constructor.
- * Handles + - * / and parentheses with correct precedence.
- */
-function evalArithmetic(expr) {
-  const tokens = []
-  let i = 0
-  while (i < expr.length) {
-    const ch = expr[i]
-    if (/\s/.test(ch)) { i++; continue }
-    if (/\d/.test(ch) || (ch === '.' && i + 1 < expr.length && /\d/.test(expr[i + 1]))) {
-      let num = ''
-      while (i < expr.length && (/\d/.test(expr[i]) || expr[i] === '.')) {
-        num += expr[i++]
-      }
-      tokens.push({ type: 'num', val: parseFloat(num) })
-      continue
-    }
-    if ('+-*/()'.includes(ch)) {
-      tokens.push({ type: 'op', val: ch })
-      i++
-      continue
-    }
-    i++ // skip unknown
-  }
-
-  // Shunting-yard → RPN → evaluate
-  const prec = { '+': 1, '-': 1, '*': 2, '/': 2 }
-  const output = []
-  const ops = []
-  for (const t of tokens) {
-    if (t.type === 'num') {
-      output.push(t)
-    } else if (t.val === '(') {
-      ops.push(t)
-    } else if (t.val === ')') {
-      while (ops.length && ops[ops.length - 1].val !== '(') output.push(ops.pop())
-      ops.pop() // discard '('
-    } else {
-      while (ops.length && ops[ops.length - 1].val !== '(' && prec[ops[ops.length - 1].val] >= prec[t.val]) {
-        output.push(ops.pop())
-      }
-      ops.push(t)
-    }
-  }
-  while (ops.length) output.push(ops.pop())
-
-  const stack = []
-  for (const t of output) {
-    if (t.type === 'num') {
-      stack.push(t.val)
-    } else {
-      const b = stack.pop()
-      const a = stack.pop()
-      switch (t.val) {
-        case '+': stack.push(a + b); break
-        case '-': stack.push(a - b); break
-        case '*': stack.push(a * b); break
-        case '/': stack.push(b === 0 ? NaN : a / b); break
-      }
-    }
-  }
-  return stack[0]
-}
-
-// ---------------------------------------------------------------------------
-// Formula evaluation
-// ---------------------------------------------------------------------------
-
-/**
- * Evaluate a formula string (without leading "=").
- * `getCellValue(colIdx, rowIdx)` returns the numeric value of a cell.
- *
- * Supports:
- *   SUM(A1:A5)   — sum of range in one column
- *   AVG(B1:B10)  — average of range in one column
- *   A1+B2*C3     — arithmetic with cell references
- */
-function evalFormula(formula, getCellValue) {
-  let expr = formula.trim()
-
-  // 1. Replace function calls: SUM(colRow:colRow) / AVG(colRow:colRow)
-  expr = expr.replace(/\b(SUM|AVG)\s*\(\s*([A-Z]+\d+)\s*:\s*([A-Z]+\d+)\s*\)/gi,
-    (_, fn, startRef, endRef) => {
-      const s = parseCellRef(startRef)
-      const e = parseCellRef(endRef)
-      if (!s || !e || s.col !== e.col) return '0'
-      const from = Math.min(s.row, e.row)
-      const to = Math.max(s.row, e.row)
-      let sum = 0
-      let count = 0
-      for (let r = from; r <= to; r++) {
-        const v = getCellValue(s.col, r)
-        if (typeof v === 'number' && !isNaN(v)) { sum += v; count++ }
-      }
-      return fn.toUpperCase() === 'AVG' ? String(count ? sum / count : 0) : String(sum)
-    })
-
-  // 2. Replace individual cell references: A1, B2, …
-  expr = expr.replace(/\b([A-Z]+\d+)\b/gi, (ref) => {
-    const c = parseCellRef(ref)
-    if (!c) return '0'
-    const v = getCellValue(c.col, c.row)
-    return typeof v === 'number' && !isNaN(v) ? String(v) : '0'
+function evalFormula(expr, getCell) {
+  const tokens = expr.match(/([A-Z]+)(\d+)|[+\-*/()]|\d+(\.\d+)?|SUM|AVG|:/g) || []
+  // Simple replacement: resolve cell refs + arithmetic
+  let resolved = expr
+  resolved = resolved.replace(/([A-Z]+)(\d+)/g, (_, col, row) => {
+    const c = col.charCodeAt(0) - 65
+    const r = parseInt(row) - 1
+    return String(getCell(c, r))
   })
-
-  // 3. Evaluate remaining arithmetic
-  return evalArithmetic(expr)
+  resolved = resolved.replace(/SUM\(([^)]+)\)/g, (_, range) => sumRange(range, getCell))
+  resolved = resolved.replace(/AVG\(([^)]+)\)/g, (_, range) => avgRange(range, getCell))
+  try {
+    const val = Function('"use strict"; return (' + resolved + ')')()
+    return isNaN(val) ? '#ERR' : val
+  } catch { return '#ERR' }
 }
 
-// ---------------------------------------------------------------------------
-// Spreadsheet data store
-// ---------------------------------------------------------------------------
+function sumRange(range, getCell) {
+  const [from, to] = range.split(':')
+  if (!to) return parseRange(from, getCell).reduce((a, b) => a + b, 0)
+  const f = parseCell(from), t = parseCell(to)
+  let sum = 0
+  for (let r = f.row; r <= t.row; r++)
+    for (let c = f.col; c <= t.col; c++)
+      sum += getCell(c, r)
+  return sum
+}
+
+function avgRange(range, getCell) {
+  const vals = parseRange(range, getCell)
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
+}
+
+function parseRange(ref, getCell) {
+  const m = ref.match(/^([A-Z]+)(\d+)$/)
+  if (!m) return [0]
+  const c = m[1].charCodeAt(0) - 65, r = parseInt(m[2]) - 1
+  return [getCell(c, r)]
+}
+
+function parseCell(ref) {
+  const m = ref.match(/^([A-Z]+)(\d+)$/)
+  if (!m) return { col: 0, row: 0 }
+  return { col: m[1].charCodeAt(0) - 65, row: parseInt(m[2]) - 1 }
+}
+
+// ── Store — single source of truth ─────────────────────────
 
 export const spreadsheetStore = store({
   name: 'vibe-spreadsheet',
   state: {
-    columns: [],
-    rows: [],
+    columns: [
+      { key: 'name', label: 'Name', type: 'string' },
+      { key: 'qty', label: 'Qty', type: 'number' },
+      { key: 'price', label: 'Price', type: 'number' },
+      { key: 'total', label: 'Total', type: 'formula' },
+    ],
+    rows: [
+      { name: 'Widget A', qty: '10', price: '25', total: '=B1*C1' },
+      { name: 'Widget B', qty: '5', price: '40', total: '=B2*C2' },
+      { name: 'Widget C', qty: '20', price: '15', total: '=B3*C3' },
+    ],
+    selectedCell: null,     // { row, col }
+    editingCell: null,      // { row, col } | null
+    editValue: '',
+    sortCol: -1,
+    sortDir: 1,
   },
+
   update: {
-    setData: (_s, data) => ({
-      columns: Array.isArray(data.columns) ? data.columns : [],
-      rows: Array.isArray(data.rows) ? data.rows : [],
+    // Cell selection
+    selectCell: (s, row, col) => ({
+      ...s, selectedCell: { row, col }, editingCell: null, editValue: '',
     }),
-    updateCell: (s, rowIdx, colKey, value) => {
-      const rows = s.rows.map((row, i) => {
-        if (i !== rowIdx) return row
-        return { ...row, [colKey]: value }
-      })
-      return { ...s, rows }
+    // Start editing
+    startEdit: (s) => {
+      if (!s.selectedCell) return s
+      const { row, col } = s.selectedCell
+      const key = s.columns[col]?.key
+      const val = key ? (s.rows[row]?.[key] ?? '') : ''
+      return { ...s, editingCell: { row, col }, editValue: String(val) }
     },
+    // Commit edit
+    commitEdit: (s) => {
+      if (!s.editingCell || !s.editValue.trim()) return { ...s, editingCell: null, editValue: '' }
+      const { row, col } = s.editingCell
+      const key = s.columns[col]?.key
+      if (!key) return { ...s, editingCell: null, editValue: '' }
+      const rows = s.rows.map((r, i) => i === row ? { ...r, [key]: s.editValue } : r)
+      return { ...s, rows, editingCell: null, editValue: '' }
+    },
+    cancelEdit: (s) => ({ ...s, editingCell: null, editValue: '' }),
+    setEditValue: (s, val) => ({ ...s, editValue: val }),
+    // Toolbar actions
     addRow: (s) => {
-      const newRow = {}
-      for (const col of s.columns) newRow[col.key] = ''
+      const newRow = {}; s.columns.forEach(c => newRow[c.key] = '')
       return { ...s, rows: [...s.rows, newRow] }
     },
-    deleteRow: (s, idx) => {
+    deleteRow: (s) => {
       if (s.rows.length <= 1) return s
-      const targetIdx = idx ?? (s.rows.length - 1)
-      return { ...s, rows: s.rows.filter((_, i) => i !== targetIdx) }
+      return { ...s, rows: s.rows.slice(0, -1) }
     },
     addColumn: (s) => {
       const key = 'col_' + (s.columns.length + 1)
-      const label = String.fromCharCode(65 + s.columns.length)
-      const col = { key, label, type: 'string' }
-      return { columns: [...s.columns, col], rows: s.rows.map(r => ({ ...r, [key]: '' })) }
+      const label = indexToCol(s.columns.length)
+      return {
+        ...s,
+        columns: [...s.columns, { key, label, type: 'string' }],
+        rows: s.rows.map(r => ({ ...r, [key]: '' })),
+      }
     },
-    deleteColumn: (s, idx) => {
+    deleteColumn: (s) => {
       if (s.columns.length <= 1) return s
-      const targetIdx = idx ?? (s.columns.length - 1)
-      const colKey = s.columns[targetIdx]?.key
-      if (!colKey) return s
-      const columns = s.columns.filter((_, i) => i !== targetIdx)
-      const rows = s.rows.map(r => {
-        const copy = { ...r }
-        delete copy[colKey]
-        return copy
+      const last = s.columns[s.columns.length - 1]
+      return {
+        ...s,
+        columns: s.columns.slice(0, -1),
+        rows: s.rows.map(r => { const c = { ...r }; delete c[last.key]; return c }),
+      }
+    },
+    // Sort
+    sortByCol: (s, colIdx) => {
+      const dir = s.sortCol === colIdx ? -s.sortDir : 1
+      const key = s.columns[colIdx]?.key
+      if (!key) return s
+      const rows = [...s.rows].sort((a, b) => {
+        const va = a[key] ?? '', vb = b[key] ?? ''
+        const na = Number(va), nb = Number(vb)
+        return dir * (isNaN(na) || isNaN(nb) ? String(va).localeCompare(String(vb)) : na - nb)
       })
-      return { columns, rows }
+      return { ...s, rows, sortCol: colIdx, sortDir: dir }
     },
   },
 })
 
-// ---------------------------------------------------------------------------
-// Helper — resolve display value for a cell (evaluate formulas)
-// ---------------------------------------------------------------------------
-
-function getCellDisplayValue(columns, rows, colIdx, rowIdx) {
-  const col = columns[colIdx]
-  if (!col || rowIdx >= rows.length) return ''
-  const raw = rows[rowIdx]?.[col.key]
-  if (raw == null) return ''
+// Helper: get display value for a cell
+function cellDisplay(columns, rows, ci, ri) {
+  const col = columns[ci]
+  if (!col || ri >= rows.length) return ''
+  const raw = rows[ri]?.[col.key] ?? ''
+  if (raw === '') return ''
   if (col.type !== 'formula') return String(raw)
-  const formula = String(raw)
-  if (!formula.startsWith('=')) return formula
-
+  if (!String(raw).startsWith('=')) return String(raw)
   const getter = (cIdx, rIdx) => {
     const c = columns[cIdx]
     if (!c || rIdx >= rows.length) return 0
@@ -231,218 +168,128 @@ function getCellDisplayValue(columns, rows, colIdx, rowIdx) {
     const n = Number(v)
     return isNaN(n) ? 0 : n
   }
-
-  const result = evalFormula(formula.slice(1), getter)
-  return isNaN(result) ? '#ERR' : String(result)
+  const result = evalFormula(String(raw).slice(1), getter)
+  return String(result)
 }
 
-// ---------------------------------------------------------------------------
-// VibeSpreadsheet component
-// ---------------------------------------------------------------------------
+// ── Top-level Spreadsheet Component ────────────────────────
 
 export const VibeSpreadsheet = component('VibeSpreadsheet', {
-  state: {
-    selectedCell: null,
-    editing: false,
-    editValue: '',
-    sortCol: -1,
-    sortDir: 1,
-    _columns: [],
-    _rows: [],
-  },
+  state: { _ready: false },
 
   update: {
-    _sync: (s, { columns, rows }) => ({ ...s, _columns: columns || [], _rows: rows || [] }),
-    selectCell: (s, row, col) => ({
-      ...s, selectedCell: { row, col }, editing: false, editValue: '',
-    }),
-    startEdit: (s) => {
-      if (!s.selectedCell) return s
-      const col = s._columns[s.selectedCell.col]
-      if (!col) return s
-      const raw = s._rows[s.selectedCell.row]?.[col.key] ?? ''
-      return { ...s, editing: true, editValue: String(raw) }
-    },
-    commitEdit: (s) => {
-      if (!s.selectedCell || s.editValue.trim() === '') {
-        return { ...s, editing: false, editValue: '' }
-      }
-      const col = s._columns[s.selectedCell.col]
-      if (!col) return { ...s, editing: false, editValue: '' }
-
-      const val = s.editValue
-      const isFormula = val.startsWith('=')
-
-      if (isFormula && col.type !== 'formula') {
-        const newCols = s._columns.map((c, i) =>
-          i === s.selectedCell.col ? { ...c, type: 'formula' } : c
-        )
-        spreadsheetStore.send('setData', { columns: newCols, rows: s._rows })
-      }
-
-      spreadsheetStore.send('updateCell', s.selectedCell.row, col.key, val)
-      return { ...s, editing: false, editValue: '' }
-    },
-    cancelEdit: (s) => ({ ...s, editing: false, editValue: '' }),
-    setEditValue: (s, val) => ({ ...s, editValue: val }),
-    navigate: (s, dRow, dCol) => {
-      const storeState = spreadsheetStore.select()
-      const maxRow = storeState.rows.length - 1
-      const maxCol = storeState.columns.length - 1
-      if (maxRow < 0 || maxCol < 0) return s
-      const cur = s.selectedCell || { row: 0, col: 0 }
-      const row = Math.max(0, Math.min(maxRow, cur.row + dRow))
-      const col = Math.max(0, Math.min(maxCol, cur.col + dCol))
-      return { ...s, selectedCell: { row, col }, editing: false, editValue: '' }
-    },
-    sort: (s, colIdx) => {
-      const dir = s.sortCol === colIdx ? -s.sortDir : 1
-      const storeState = spreadsheetStore.select()
-      const colKey = storeState.columns[colIdx]?.key
-      if (!colKey) return { ...s, sortCol: colIdx, sortDir: dir }
-      const sorted = [...storeState.rows].sort((a, b) => {
-        const va = a[colKey] ?? ''
-        const vb = b[colKey] ?? ''
-        const na = Number(va), nb = Number(vb)
-        const compare = isNaN(na) || isNaN(nb)
-          ? String(va).localeCompare(String(vb))
-          : na - nb
-        return dir * compare
-      })
-      spreadsheetStore.send('setData', { columns: storeState.columns, rows: sorted })
-      return { ...s, sortCol: colIdx, sortDir: dir }
-    },
+    _refresh: (s) => ({ ...s, _ready: true }),
   },
 
   view(state) {
-    const columns = state._columns || []
-    const rows = state._rows || []
-    const { selectedCell, editing, editValue, sortCol, sortDir } = state
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    const s = spreadsheetStore.select()
+    const { columns, rows, selectedCell, editingCell, editValue, sortCol, sortDir } = s
 
-    // Current cell reference (A1 notation) and value for formula bar
-    const cellRef = selectedCell ? indexToCol(selectedCell.col) + (selectedCell.row + 1) : ''
-    const cellValue = selectedCell
+    // Current cell reference
+    const selRef = selectedCell ? indexToCol(selectedCell.col) + (selectedCell.row + 1) : ''
+    const selVal = selectedCell
       ? String(rows[selectedCell.row]?.[columns[selectedCell.col]?.key] ?? '')
       : ''
 
-    return `<div class="vibe-spreadsheet" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;color:#1a1a1a;background:#fff;border:1px solid #dadce0;border-radius:8px;overflow:hidden;">
+    // Escape helper
+    const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+    return `
+    <div class="vibe-spreadsheet" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;color:#1a1a1a;background:#fff;border:1px solid #dadce0;border-radius:8px;overflow:hidden;">
+      <!-- Toolbar -->
       <div style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #dadce0;background:#f8f9fa;align-items:center;">
-        <button data-spreadsheet-action="addRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Row</button>
-        <button data-spreadsheet-action="deleteRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Row</button>
-        <button data-spreadsheet-action="addColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Col</button>
-        <button data-spreadsheet-action="deleteColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Col</button>
-        <span style="font-size:11px;color:#999;margin-left:8px;">${rows.length} rows x ${columns.length} cols</span>
+        <button data-up-event="click:addRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Row</button>
+        <button data-up-event="click:deleteRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Row</button>
+        <button data-up-event="click:addColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Col</button>
+        <button data-up-event="click:deleteColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Col</button>
+        <span style="font-size:11px;color:#999;margin-left:8px;">${rows.length} x ${columns.length}</span>
       </div>
+
+      <!-- Formula bar -->
       <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #dadce0;background:#fff;">
-        <span style="font-size:11px;font-weight:600;color:#666;min-width:28px;text-align:center;">${cellRef}</span>
-        <span style="flex:1;font-size:13px;padding:2px 4px;min-height:22px;color:${editing ? '#1a73e8' : '#333'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(editing ? editValue : cellValue)}</span>
+        <span style="font-size:11px;font-weight:600;color:#666;min-width:32px;text-align:center;">${selRef}</span>
+        <span style="flex:1;font-size:13px;padding:2px 4px;min-height:22px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(editingCell ? editValue : selVal)}</span>
       </div>
+
+      <!-- Grid -->
       <div style="overflow:auto;max-height:360px;">
         <table style="width:100%;border-collapse:collapse;table-layout:auto;">
           <thead><tr>
             <th style="width:44px;min-width:44px;padding:5px 6px;text-align:center;font-size:11px;font-weight:600;color:#666;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #c0c0c0;position:sticky;top:0;z-index:3;"></th>
             ${columns.map((col, ci) => {
-              const colLetter = indexToCol(ci)
               const sIcon = sortCol === ci ? (sortDir === 1 ? ' \u25B2' : ' \u25BC') : ''
-              return `<th data-col="${ci}" class="vibe-spreadsheet-header" style="padding:5px 8px;text-align:left;font-size:11px;font-weight:600;color:#333;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #c0c0c0;cursor:pointer;user-select:none;position:sticky;top:0;z-index:2;min-width:90px;">${esc(col.label)}<span style="font-size:9px;color:#aaa;">${sIcon}</span></th>`
+              return `<th data-up-event="click:sortByCol,${ci}" style="padding:5px 8px;text-align:left;font-size:11px;font-weight:600;color:#333;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #c0c0c0;cursor:pointer;user-select:none;position:sticky;top:0;z-index:2;min-width:90px;">${esc(col.label)}<span style="font-size:9px;color:#aaa;">${sIcon}</span></th>`
             }).join('')}
           </tr></thead>
-          <tbody>${rows.map((row, ri) => `<tr data-row="${ri}">
-            <td style="padding:4px 6px;text-align:center;font-size:11px;color:#999;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #e8eaed;">${ri + 1}</td>
-            ${columns.map((col, ci) => {
-              const isSel = selectedCell && selectedCell.row === ri && selectedCell.col === ci
-              const display = getCellDisplayValue(columns, rows, ci, ri)
-              const sel = isSel ? 'outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;z-index:1;position:relative;' : ''
-              const stripe = ri % 2 === 0 ? 'background:#fff;' : 'background:#fafafa;'
-              if (editing && isSel) {
-                return `<td data-col="${ci}" data-row="${ri}" style="padding:0;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;min-width:90px;"><input class="vibe-spreadsheet-input" value="${esc(editValue)}" style="width:100%;border:none;outline:none;padding:4px 8px;font-size:13px;font-family:inherit;background:transparent;color:#1a1a1a;box-sizing:border-box;"/></td>`
-              }
-              return `<td data-col="${ci}" data-row="${ri}" style="padding:4px 8px;font-size:13px;cursor:cell;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;${sel}${stripe}">${esc(display)}</td>`
-            }).join('')}
-          </tr>`).join('')}
-          ${rows.length === 0 ? `<tr><td colspan="${columns.length + 1}" style="padding:40px;text-align:center;color:#999;font-size:13px;">Click + Row to add data</td></tr>` : ''}
+          <tbody>
+            ${rows.map((row, ri) => `<tr>
+              <td style="padding:4px 6px;text-align:center;font-size:11px;color:#999;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #e8eaed;">${ri + 1}</td>
+              ${columns.map((col, ci) => {
+                const isSel = selectedCell && selectedCell.row === ri && selectedCell.col === ci
+                const isEdit = editingCell && editingCell.row === ri && editingCell.col === ci
+                const display = cellDisplay(columns, rows, ci, ri)
+                const stripe = ri % 2 ? 'background:#fafafa;' : ''
+
+                if (isEdit) {
+                  return `<td style="padding:0;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;min-width:90px;">
+                    <input data-up-prop="editValue:value" value="${esc(editValue)}"
+                      data-up-event="keydown:commitOnEnter"
+                      style="width:100%;border:none;outline:none;padding:4px 8px;font-size:13px;font-family:inherit;background:transparent;color:#1a1a1a;box-sizing:border-box;" />
+                  </td>`
+                }
+
+                return `<td data-row="${ri}" data-col="${ci}"
+                  style="padding:4px 8px;font-size:13px;cursor:cell;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;${isSel ? 'outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;z-index:1;position:relative;' : ''}${stripe}">${esc(display)}</td>`
+              }).join('')}
+            </tr>`).join('')}
+            ${rows.length === 0 ? `<tr><td colspan="${columns.length + 1}" style="padding:40px;text-align:center;color:#999;font-size:13px;">Click + Row to add data</td></tr>` : ''}
           </tbody>
         </table>
       </div>
     </div>`
   },
+
   mount(el, ctx) {
-    // Initial sync from store
-    const storeState = spreadsheetStore.select()
-    ctx.send('_sync', { columns: storeState.columns, rows: storeState.rows })
+    // Re-render on store change
+    const unsub = spreadsheetStore.subscribe(() => ctx.send('_refresh'))
 
-    // Subscribe to store changes
-    const unsub = spreadsheetStore.subscribe((s) => {
-      ctx.send('_sync', { columns: s.columns, rows: s.rows })
-    })
-
-    // Cell click: select cell + header sort
+    // Click: select cell
     el.addEventListener('click', (e) => {
       const td = e.target.closest('[data-row][data-col]')
-      if (td) ctx.send('selectCell', parseInt(td.dataset.row), parseInt(td.dataset.col))
-      const th = e.target.closest('.vibe-spreadsheet-header')
-      if (th && !isNaN(parseInt(th.dataset.col))) ctx.send('sort', parseInt(th.dataset.col))
-    })
-
-    // Double-click: start edit
-    el.addEventListener('dblclick', (e) => {
-      if (e.target.closest('[data-row][data-col]')) ctx.send('startEdit')
-    })
-
-    // Keyboard shortcuts
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); ctx.send('commitEdit'); ctx.send('navigate', 1, 0) }
-      else if (e.key === 'Tab') { e.preventDefault(); ctx.send('commitEdit'); ctx.send('navigate', 0, e.shiftKey ? -1 : 1) }
-      else if (e.key === 'Escape') { ctx.send('cancelEdit') }
-      else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const sel = ctx.get().selectedCell
-        if (sel) { ctx.send('startEdit'); setTimeout(() => ctx.send('setEditValue', e.key), 10) }
+      if (td) {
+        const row = parseInt(td.dataset.row), col = parseInt(td.dataset.col)
+        spreadsheetStore.send('selectCell', row, col)
       }
     })
 
-    // Toolbar buttons
-    el.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-spreadsheet-action]')
-      if (!btn) return
-      const action = btn.dataset.spreadsheetAction
-      if (action === 'addRow') spreadsheetStore.send('addRow')
-      else if (action === 'deleteRow') spreadsheetStore.send('deleteRow')
-      else if (action === 'addColumn') spreadsheetStore.send('addColumn')
-      else if (action === 'deleteColumn') spreadsheetStore.send('deleteColumn')
+    // Double-click: start editing
+    el.addEventListener('dblclick', (e) => {
+      const td = e.target.closest('[data-row][data-col]')
+      if (td) spreadsheetStore.send('startEdit')
     })
 
-    return () => { unsub() }
-  },
+    // Keyboard handlers
+    el.addEventListener('keydown', (e) => {
+      const s = spreadsheetStore.select()
+      if (e.key === 'Enter' && s.editingCell) {
+        e.preventDefault()
+        spreadsheetStore.send('commitEdit')
+        const nextRow = Math.min(s.editingCell.row + 1, s.rows.length - 1)
+        spreadsheetStore.send('selectCell', nextRow, s.editingCell.col)
+      } else if (e.key === 'Escape' && s.editingCell) {
+        spreadsheetStore.send('cancelEdit')
+      } else if (e.key === 'Tab' && s.editingCell) {
+        e.preventDefault()
+        spreadsheetStore.send('commitEdit')
+        const nextCol = s.editingCell.col + (e.shiftKey ? -1 : 1)
+        if (nextCol >= 0 && nextCol < s.columns.length) {
+          spreadsheetStore.send('selectCell', s.editingCell.row, nextCol)
+          setTimeout(() => spreadsheetStore.send('startEdit'), 20)
+        }
+      }
+    })
 
-    getData() {
-    const s = spreadsheetStore.select()
-    return { columns: s.columns, rows: s.rows }
-  },
-  setData(data) {
-    spreadsheetStore.send('setData', data)
-  },
-  addRow() {
-    spreadsheetStore.send('addRow')
-  },
-  deleteRow(idx) {
-    if (idx != null) {
-      spreadsheetStore.send('deleteRow', idx)
-    } else {
-      const s = spreadsheetStore.select()
-      if (s.rows.length > 1) spreadsheetStore.send('deleteRow', s.rows.length - 1)
-    }
-  },
-  addColumn() {
-    spreadsheetStore.send('addColumn')
-  },
-  deleteColumn(idx) {
-    if (idx != null) {
-      spreadsheetStore.send('deleteColumn', idx)
-    } else {
-      const s = spreadsheetStore.select()
-      if (s.columns.length > 1) spreadsheetStore.send('deleteColumn', s.columns.length - 1)
-    }
+    return () => unsub()
   },
 })
 
