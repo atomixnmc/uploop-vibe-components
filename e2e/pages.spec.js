@@ -482,3 +482,35 @@ test.describe("Build validation", () => {
     await expect(page.locator(".main h1")).toBeVisible();
   });
 });
+
+test.describe("Editor Demo", () => {
+  test("should load without JS errors", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    expect(errors).toEqual([]);
+  });
+
+  test("should render WYSIWYG content", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+    await expect(page.locator("body")).toContainText("Welcome to Vibe Editor");
+  });
+
+  test("should render code editor", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+    await expect(page.locator("body")).toContainText("Uploop Component");
+  });
+
+  test("should render spreadsheet", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+    await expect(page.locator("body")).toContainText("Widget A");
+  });
+});

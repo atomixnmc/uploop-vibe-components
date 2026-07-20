@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor Demo — Uploop Vibe</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#f5f6fa;color:#212529}
+    #app{max-width:1100px;margin:0 auto;padding:2rem}
+    h1{font-size:1.4rem;font-weight:800;margin-bottom:0.25rem}
+    .back-link{color:#888;text-decoration:none;font-size:0.8rem;display:inline-block;margin-bottom:1.5rem}
+    .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+    .demo-card{background:#fff;border-radius:12px;border:1px solid #e8e8ed;overflow:hidden}
+    .demo-card h3{padding:0.75rem 1rem;font-size:0.85rem;font-weight:600;background:#fafafa;border-bottom:1px solid #eee}
+    .demo-body{padding:1rem;min-height:200px}
+    .full-width{grid-column:1/-1}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <a class="back-link" href="/">\u2190 Back to Home</a>
+    <h1>\u270F\uFE0F Editor Components</h1>
+    <p style="color:#888;font-size:0.85rem;margin-bottom:1.5rem;">WYSIWYG, Code, Spreadsheet, Layout — built on uploop HyperGraph</p>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h3>WYSIWYG Editor</h3>
+        <div class="demo-body" id="demo-wysiwyg"></div>
+      </div>
+      <div class="demo-card">
+        <h3>Code Editor</h3>
+        <div class="demo-body" id="demo-code"></div>
+      </div>
+      <div class="demo-card full-width">
+        <h3>Spreadsheet</h3>
+        <div class="demo-body" id="demo-spreadsheet"></div>
+      </div>
+      <div class="demo-card full-width">
+        <h3>Layout Builder</h3>
+        <div class="demo-body" id="demo-layout" style="min-height:350px"></div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

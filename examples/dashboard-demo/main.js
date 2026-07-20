@@ -161,8 +161,10 @@ const Dashboard = component('VibeDashboard', {
       }
     })
 
-    // Mount overview charts initially
-    mountChartsForTab('overview')
+    // Mount overview charts after DOM is ready
+    requestAnimationFrame(() => {
+      setTimeout(() => mountChartsForTab('overview'), 50)
+    })
 
     // Listen for tab changes
     if (Dashboard._loop) {

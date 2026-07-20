@@ -26,10 +26,8 @@ export default defineConfig(({ mode }) => ({
       "@uploop/flows": path.join(uploopRoot, "flows/src/index.js"),
       "@uploop-vibe/vibe": path.join(vibeRoot, "vibe/src/index.js"),
       "@uploop-vibe/vibe-ai": path.join(vibeRoot, "vibe-ai/src/index.js"),
-      "@uploop-vibe/vibe-charts": path.join(
-        vibeRoot,
-        "vibe-charts/src/index.js",
-      ),
+      "@uploop-vibe/vibe-charts": path.join(vibeRoot, "vibe-charts/src/index.js"),
+      "@uploop-vibe/vibe-editor": path.join(vibeRoot, "editor/src/index.js"),
     },
   },
   build: {
@@ -43,6 +41,7 @@ export default defineConfig(({ mode }) => ({
         "ifs-demo": resolve(examplesRoot, "ifs-demo/index.html"),
         "charts-demo": resolve(examplesRoot, "charts-demo/index.html"),
         "dashboard-demo": resolve(examplesRoot, "dashboard-demo/index.html"),
+        "editor-demo": resolve(examplesRoot, "editor-demo/index.html"),
       },
     },
   },
