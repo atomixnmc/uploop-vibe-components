@@ -180,24 +180,26 @@ export const spreadsheetStore = store({
     },
     addRow: (s) => {
       const newRow = {}
-      s.columns.forEach(c => { newRow[c.key] = c.type === 'number' ? 0 : '' })
+      for (const col of s.columns) newRow[col.key] = ''
       return { ...s, rows: [...s.rows, newRow] }
     },
     deleteRow: (s, idx) => {
       if (s.rows.length <= 1) return s
-      return { ...s, rows: s.rows.filter((_, i) => i !== idx) }
+      const targetIdx = idx ?? (s.rows.length - 1)
+      return { ...s, rows: s.rows.filter((_, i) => i !== targetIdx) }
     },
     addColumn: (s) => {
-      const key = `col_${s.columns.length + 1}`
-      const label = `Col ${s.columns.length + 1}`
+      const key = 'col_' + (s.columns.length + 1)
+      const label = String.fromCharCode(65 + s.columns.length)
       const col = { key, label, type: 'string' }
-      const rows = s.rows.map(r => ({ ...r, [key]: '' }))
-      return { columns: [...s.columns, col], rows }
+      return { columns: [...s.columns, col], rows: s.rows.map(r => ({ ...r, [key]: '' })) }
     },
     deleteColumn: (s, idx) => {
       if (s.columns.length <= 1) return s
-      const colKey = s.columns[idx].key
-      const columns = s.columns.filter((_, i) => i !== idx)
+      const targetIdx = idx ?? (s.columns.length - 1)
+      const colKey = s.columns[targetIdx]?.key
+      if (!colKey) return s
+      const columns = s.columns.filter((_, i) => i !== targetIdx)
       const rows = s.rows.map(r => {
         const copy = { ...r }
         delete copy[colKey]
