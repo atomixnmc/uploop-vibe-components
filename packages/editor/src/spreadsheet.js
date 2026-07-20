@@ -318,147 +318,55 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
     const columns = state._columns || []
     const rows = state._rows || []
     const { selectedCell, editing, editValue, sortCol, sortDir } = state
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+    // Current cell reference (A1 notation) and value for formula bar
+    const cellRef = selectedCell ? indexToCol(selectedCell.col) + (selectedCell.row + 1) : ''
+    const cellValue = selectedCell
+      ? String(rows[selectedCell.row]?.[columns[selectedCell.col]?.key] ?? '')
+      : ''
 
-    return /* html */ `
-    <div class="vibe-spreadsheet" style="
-      font-family:var(--vibe-font-sans, system-ui, sans-serif);
-      font-size:var(--vibe-font-size-sm);
-      color:var(--vibe-color-fg);
-      background:var(--vibe-color-bg);
-      border:1px solid var(--vibe-color-border);
-      border-radius:var(--vibe-radius-md);
-      overflow:hidden;
-    ">
-      <div class="vibe-spreadsheet-toolbar" style="
-        display:flex; gap:0.375rem; padding:0.5rem 0.75rem;
-        border-bottom:1px solid var(--vibe-color-border);
-        background:var(--vibe-color-surface);
-        align-items:center;
-      ">
-        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="addRow" style="
-          padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
-          border:1px solid var(--vibe-color-border);
-          border-radius:var(--vibe-radius-sm);
-          background:var(--vibe-color-bg);
-          color:var(--vibe-color-fg);
-          cursor:pointer;
-        ">+ Row</button>
-        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="deleteRow" style="
-          padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
-          border:1px solid var(--vibe-color-border);
-          border-radius:var(--vibe-radius-sm);
-          background:var(--vibe-color-bg);
-          color:var(--vibe-color-fg);
-          cursor:pointer;
-        ">- Row</button>
-        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="addColumn" style="
-          padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
-          border:1px solid var(--vibe-color-border);
-          border-radius:var(--vibe-radius-sm);
-          background:var(--vibe-color-bg);
-          color:var(--vibe-color-fg);
-          cursor:pointer;
-        ">+ Col</button>
-        <button class="vibe-spreadsheet-btn" data-spreadsheet-action="deleteColumn" style="
-          padding:0.25rem 0.625rem; font-size:var(--vibe-font-size-xs);
-          border:1px solid var(--vibe-color-border);
-          border-radius:var(--vibe-radius-sm);
-          background:var(--vibe-color-bg);
-          color:var(--vibe-color-fg);
-          cursor:pointer;
-        ">- Col</button>
-        <div style="flex:1;"></div>
-        <span style="font-size:var(--vibe-font-size-xs);color:var(--vibe-color-muted);">
-          ${rows.length} &times; ${columns.length}
-        </span>
+    return `<div class="vibe-spreadsheet" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;color:#1a1a1a;background:#fff;border:1px solid #dadce0;border-radius:8px;overflow:hidden;">
+      <div style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #dadce0;background:#f8f9fa;align-items:center;">
+        <button data-spreadsheet-action="addRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Row</button>
+        <button data-spreadsheet-action="deleteRow" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Row</button>
+        <button data-spreadsheet-action="addColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">+ Col</button>
+        <button data-spreadsheet-action="deleteColumn" style="padding:4px 12px;font-size:12px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;">- Col</button>
+        <span style="font-size:11px;color:#999;margin-left:8px;">${rows.length} rows x ${columns.length} cols</span>
       </div>
-
-      <div class="vibe-spreadsheet-table-wrap" style="overflow:auto;max-height:420px;">
-        <table class="vibe-spreadsheet-table" style="
-          width:100%; border-collapse:collapse; table-layout:auto;
-        ">
-          <thead>
-            <tr>
-              <th style="
-                width:40px; min-width:40px;
-                padding:0.375rem 0.5rem; text-align:center;
-                font-weight:var(--vibe-font-weight-semibold);
-                font-size:var(--vibe-font-size-xs);
-                color:var(--vibe-color-mutedFg);
-                background:var(--vibe-color-surface);
-                border-bottom:2px solid var(--vibe-color-border);
-                position:sticky; top:0; z-index:2;
-              ">#</th>
-              ${columns.map((col, ci) => {
-                const sortIcon = sortCol === ci ? (sortDir === 1 ? ' ▲' : ' ▼') : ''
-                return `<th data-col="${ci}" class="vibe-spreadsheet-header" style="
-                  padding:0.375rem 0.75rem; text-align:left; white-space:nowrap;
-                  font-weight:var(--vibe-font-weight-semibold);
-                  font-size:var(--vibe-font-size-xs);
-                  color:var(--vibe-color-mutedFg);
-                  background:var(--vibe-color-surface);
-                  border-bottom:2px solid var(--vibe-color-border);
-                  cursor:pointer; user-select:none;
-                  position:sticky; top:0; z-index:2;
-                ">${esc(col.label)}${sortIcon}</th>`
-              }).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map((row, ri) => `
-              <tr data-row="${ri}" style="
-                ${ri % 2 === 0 ? 'background:var(--vibe-color-bg);' : 'background:var(--vibe-color-surface);'}
-              ">
-                <td style="
-                  padding:0.25rem 0.5rem; text-align:center;
-                  font-size:var(--vibe-font-size-xs);
-                  color:var(--vibe-color-muted);
-                  border-bottom:1px solid var(--vibe-color-border);
-                ">${ri + 1}</td>
-                ${columns.map((col, ci) => {
-                  const isSelected = selectedCell &&
-                    selectedCell.row === ri && selectedCell.col === ci
-                  const display = getCellDisplayValue(columns, rows, ci, ri)
-                  const style = isSelected
-                    ? `border:2px solid #3b82f6; background:#eff6ff;`
-                    : `border-bottom:1px solid var(--vibe-color-border);`
-
-                  if (editing && isSelected) {
-                    return `<td data-col="${ci}" data-row="${ri}" style="
-                      padding:0; ${style} min-width:80px;
-                    ">
-                      <input class="vibe-spreadsheet-input" data-up-prop="editValue:value"
-                        value="${esc(editValue)}"
-                        style="
-                          width:100%; height:100%; border:none; outline:none;
-                          padding:0.25rem 0.5rem; font-size:var(--vibe-font-size-sm);
-                          font-family:inherit; background:transparent;
-                          color:var(--vibe-color-fg); box-sizing:border-box;
-                        "
-                      />
-                    </td>`
-                  }
-
-                  return `<td data-col="${ci}" data-row="${ri}" style="
-                    padding:0.25rem 0.5rem; ${style} min-width:80px;
-                    font-size:var(--vibe-font-size-sm);
-                    cursor:cell; white-space:nowrap;
-                    overflow:hidden; text-overflow:ellipsis; max-width:220px;
-                  ">${esc(display)}</td>`
-                }).join('')}
-              </tr>
-            `).join('')}
-            ${rows.length === 0 ? `<tr><td colspan="${columns.length + 1}" style="
-              padding:2rem; text-align:center; color:var(--vibe-color-muted);
-            ">No data. Add a row to get started.</td></tr>` : ''}
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #dadce0;background:#fff;">
+        <span style="font-size:11px;font-weight:600;color:#666;min-width:28px;text-align:center;">${cellRef}</span>
+        <span style="flex:1;font-size:13px;padding:2px 4px;min-height:22px;color:${editing ? '#1a73e8' : '#333'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(editing ? editValue : cellValue)}</span>
+      </div>
+      <div style="overflow:auto;max-height:360px;">
+        <table style="width:100%;border-collapse:collapse;table-layout:auto;">
+          <thead><tr>
+            <th style="width:44px;min-width:44px;padding:5px 6px;text-align:center;font-size:11px;font-weight:600;color:#666;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #c0c0c0;position:sticky;top:0;z-index:3;"></th>
+            ${columns.map((col, ci) => {
+              const colLetter = indexToCol(ci)
+              const sIcon = sortCol === ci ? (sortDir === 1 ? ' \u25B2' : ' \u25BC') : ''
+              return `<th data-col="${ci}" class="vibe-spreadsheet-header" style="padding:5px 8px;text-align:left;font-size:11px;font-weight:600;color:#333;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #c0c0c0;cursor:pointer;user-select:none;position:sticky;top:0;z-index:2;min-width:90px;">${esc(col.label)}<span style="font-size:9px;color:#aaa;">${sIcon}</span></th>`
+            }).join('')}
+          </tr></thead>
+          <tbody>${rows.map((row, ri) => `<tr data-row="${ri}">
+            <td style="padding:4px 6px;text-align:center;font-size:11px;color:#999;background:#f8f9fa;border-right:1px solid #dadce0;border-bottom:1px solid #e8eaed;">${ri + 1}</td>
+            ${columns.map((col, ci) => {
+              const isSel = selectedCell && selectedCell.row === ri && selectedCell.col === ci
+              const display = getCellDisplayValue(columns, rows, ci, ri)
+              const sel = isSel ? 'outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;z-index:1;position:relative;' : ''
+              const stripe = ri % 2 === 0 ? 'background:#fff;' : 'background:#fafafa;'
+              if (editing && isSel) {
+                return `<td data-col="${ci}" data-row="${ri}" style="padding:0;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;outline:2px solid #1a73e8;outline-offset:-1px;background:#e8f0fe;min-width:90px;"><input class="vibe-spreadsheet-input" value="${esc(editValue)}" style="width:100%;border:none;outline:none;padding:4px 8px;font-size:13px;font-family:inherit;background:transparent;color:#1a1a1a;box-sizing:border-box;"/></td>`
+              }
+              return `<td data-col="${ci}" data-row="${ri}" style="padding:4px 8px;font-size:13px;cursor:cell;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;${sel}${stripe}">${esc(display)}</td>`
+            }).join('')}
+          </tr>`).join('')}
+          ${rows.length === 0 ? `<tr><td colspan="${columns.length + 1}" style="padding:40px;text-align:center;color:#999;font-size:13px;">Click + Row to add data</td></tr>` : ''}
           </tbody>
         </table>
       </div>
     </div>`
   },
-
   mount(el, ctx) {
     // Initial sync from store
     const storeState = spreadsheetStore.select()
