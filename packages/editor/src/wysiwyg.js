@@ -10,6 +10,8 @@
 //   WysiwygEditor.getContent()
 
 import { component } from '@uploop/html'
+import { editorPrompt } from './editor-prompt.js'
+import { showInspector } from './hypergraph-inspector.js'
 
 // ── Closure state (survives innerHTML re-renders) ──────────
 
@@ -90,6 +92,8 @@ function toolbarHTML() {
     + '<button data-media="carousel" title="Insert Carousel" style="' + tbBtn + '">🎠 Carousel</button>'
     + '<button data-media="audio" title="Insert Audio" style="' + tbBtn + '">🎵 Audio</button>'
     + '<button data-media="video" title="Insert Video" style="' + tbBtn + '">🎬 Video</button>'
+    + sep()
+    + '<button data-action="inspect" title="Inspect HyperGraph" style="' + tbBtn + '">🔍 Inspect</button>'
     + '</div>'
 }
 
@@ -157,27 +161,65 @@ export const VibeWysiwygEditor = component('VibeWysiwygEditor', {
 
     const toolbar = el.querySelector('.up-wysiwyg-toolbar')
 
-    const onClick = (e) => {
+    const onClick = async (e) => {
       const btn = e.target.closest('button')
       if (!btn) return
       e.preventDefault()
 
       const cmd = btn.dataset.cmd
       if (cmd === 'createLink') {
-        const url = prompt('Link URL:', 'https://')
-        if (url) document.execCommand(cmd, false, url)
+        const result = await editorPrompt({
+          title: 'Insert Link',
+          fields: [
+            { key: 'url', label: 'URL', type: 'url', placeholder: 'https://', required: true },
+          ]
+        })
+        if (result?.url) document.execCommand(cmd, false, result.url)
       } else if (cmd) {
         document.execCommand(cmd, false, btn.dataset.arg || null)
       }
 
       const mediaType = btn.dataset.media
       if (mediaType) {
-        el.dispatchEvent(
-          new CustomEvent('up-media-insert', {
-            detail: { type: mediaType },
-            bubbles: true,
+        if (body) body.focus()
+        if (mediaType === 'image') {
+          const result = await editorPrompt({
+            title: 'Insert Image',
+            fields: [
+              { key: 'url', label: 'Image URL', type: 'url', placeholder: 'https://...', required: true },
+              { key: 'alt', label: 'Alt Text', type: 'text', placeholder: 'Image description' },
+            ]
           })
-        )
+          if (result?.url) document.execCommand('insertImage', false, result.url)
+        } else if (mediaType === 'audio') {
+          const result = await editorPrompt({
+            title: 'Insert Audio',
+            fields: [
+              { key: 'url', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
+            ]
+          })
+          if (result?.url) {
+            document.execCommand('insertHTML', false, '<audio controls src="' + esc(result.url) + '" style="width:100%;margin:0.5rem 0;"></audio><p></p>')
+          }
+        } else if (mediaType === 'video') {
+          const result = await editorPrompt({
+            title: 'Insert Video',
+            fields: [
+              { key: 'url', label: 'Video URL', type: 'url', placeholder: 'https://...mp4', required: true },
+            ]
+          })
+          if (result?.url) {
+            document.execCommand('insertHTML', false, '<video controls src="' + esc(result.url) + '" style="width:100%;max-width:560px;margin:0.5rem 0;border-radius:8px;"></video><p></p>')
+          }
+        } else if (mediaType === 'carousel') {
+          const html = '<div style="background:#f0f0ff;border:2px dashed #646cff;border-radius:8px;padding:1rem;text-align:center;margin:0.5rem 0;">🎠 <strong>Carousel Placeholder</strong><br><span style="font-size:0.8rem;color:#888;">Replace with carousel images</span></div><p></p>'
+          document.execCommand('insertHTML', false, html)
+        }
+      }
+
+      // Inspect action — pass the component descriptor for full graph
+      if (btn.dataset.action === 'inspect') {
+        showInspector(VibeWysiwygEditor)
       }
 
       // Save to closure after toolbar action
@@ -200,8 +242,12 @@ export const VibeWysiwygEditor = component('VibeWysiwygEditor', {
         if (cmd) {
           e.preventDefault()
           if (cmd === 'createLink') {
-            const url = prompt('Link URL:', 'https://')
-            if (url) document.execCommand(cmd, false, url)
+            editorPrompt({
+              title: 'Insert Link',
+              fields: [{ key: 'url', label: 'URL', type: 'url', placeholder: 'https://', required: true }]
+            }).then(result => {
+              if (result?.url) document.execCommand(cmd, false, result.url)
+            })
           } else {
             document.execCommand(cmd)
           }

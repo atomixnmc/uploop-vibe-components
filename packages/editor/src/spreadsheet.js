@@ -271,12 +271,18 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
       }
     })
 
-    // Cell click
+    // Cell click — commit any pending edit first, then select
     el.addEventListener('click', (e) => {
       const td = e.target.closest('[data-row][data-col]')
       if (td) {
+        const s = spreadsheetStore.select()
+        // Commit any in-progress edit before selecting new cell
+        if (s.editingCell) spreadsheetStore.send('commitEdit')
         const row = parseInt(td.dataset.row), col = parseInt(td.dataset.col)
-        spreadsheetStore.send('selectCell', row, col)
+        // Don't reselect the cell we're already editing (avoids double edit)
+        if (!s.editingCell || s.editingCell.row !== row || s.editingCell.col !== col) {
+          spreadsheetStore.send('selectCell', row, col)
+        }
       }
     })
 
