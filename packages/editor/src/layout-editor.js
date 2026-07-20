@@ -446,6 +446,9 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
     // Initial render
     ctx.send('_refresh')
 
+    // Helper to dispatch actions (used by drag-drop handlers below)
+    const updateState = (action, ...args) => ctx.send(action, ...args)
+
     const dropzone = el.querySelector('.vibe-layout-dropzone')
     const catalogList = el.querySelector('.vibe-layout-catalog-list')
 

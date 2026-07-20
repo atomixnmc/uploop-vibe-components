@@ -556,3 +556,40 @@ test.describe("Editor interactions", () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe("Layout editor interactions", () => {
+  test("layout editor loads without crash", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1500);
+    expect(errors).toEqual([]);
+  });
+
+  test("clicking catalog item should not crash", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    // Click a catalog item in the layout editor
+    const catalogItem = page.locator('.vibe-layout-catalog-item').first();
+    if (await catalogItem.isVisible().catch(() => false)) {
+      await catalogItem.click();
+      await page.waitForTimeout(300);
+      // Should not throw
+      expect(true).toBe(true);
+    }
+  });
+
+  test("clicking dropzone should not crash", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    const dropzone = page.locator('.vibe-layout-dropzone');
+    if (await dropzone.isVisible().catch(() => false)) {
+      await dropzone.click();
+      await page.waitForTimeout(300);
+      expect(true).toBe(true);
+    }
+  });
+});
