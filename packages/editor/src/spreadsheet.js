@@ -240,44 +240,42 @@ function getCellDisplayValue(columns, rows, colIdx, rowIdx) {
 
 export const VibeSpreadsheet = component('VibeSpreadsheet', {
   state: {
-    selectedCell: null,   // { row, col } | null
+    selectedCell: null,
     editing: false,
     editValue: '',
     sortCol: -1,
-    sortDir: 1,           // 1 = asc, -1 = desc
+    sortDir: 1,
+    _columns: [],
+    _rows: [],
   },
 
   update: {
+    _sync: (s, { columns, rows }) => ({ ...s, _columns: columns || [], _rows: rows || [] }),
     selectCell: (s, row, col) => ({
       ...s, selectedCell: { row, col }, editing: false, editValue: '',
     }),
     startEdit: (s) => {
       if (!s.selectedCell) return s
-      const storeState = spreadsheetStore.select()
-      const col = storeState.columns[s.selectedCell.col]
+      const col = s._columns[s.selectedCell.col]
       if (!col) return s
-      const raw = storeState.rows[s.selectedCell.row]?.[col.key] ?? ''
+      const raw = s._rows[s.selectedCell.row]?.[col.key] ?? ''
       return { ...s, editing: true, editValue: String(raw) }
     },
     commitEdit: (s) => {
       if (!s.selectedCell || s.editValue.trim() === '') {
         return { ...s, editing: false, editValue: '' }
       }
-      const storeState = spreadsheetStore.select()
-      const col = storeState.columns[s.selectedCell.col]
+      const col = s._columns[s.selectedCell.col]
       if (!col) return { ...s, editing: false, editValue: '' }
 
       const val = s.editValue
-      // Auto-detect formula type
       const isFormula = val.startsWith('=')
-      const colType = isFormula ? 'formula' : col.type
 
-      // Update column type if formula was entered into a non-formula column
       if (isFormula && col.type !== 'formula') {
-        const newCols = storeState.columns.map((c, i) =>
+        const newCols = s._columns.map((c, i) =>
           i === s.selectedCell.col ? { ...c, type: 'formula' } : c
         )
-        spreadsheetStore.send('setData', { columns: newCols, rows: storeState.rows })
+        spreadsheetStore.send('setData', { columns: newCols, rows: s._rows })
       }
 
       spreadsheetStore.send('updateCell', s.selectedCell.row, col.key, val)
@@ -315,8 +313,8 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
   },
 
   view(state) {
-    const storeState = spreadsheetStore.select()
-    const { columns, rows } = storeState
+    const columns = state._columns || []
+    const rows = state._rows || []
     const { selectedCell, editing, editValue, sortCol, sortDir } = state
 
     const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
@@ -460,7 +458,7 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
   },
 
   mount(el, ctx) {
-    // Sync store → component on first mount
+    // Initial sync from store
     const storeState = spreadsheetStore.select()
     ctx.send('_sync', { columns: storeState.columns, rows: storeState.rows })
 
@@ -469,98 +467,45 @@ export const VibeSpreadsheet = component('VibeSpreadsheet', {
       ctx.send('_sync', { columns: s.columns, rows: s.rows })
     })
 
-    // ── Event delegation ──────────────────────────────────────────
-
-    // Cell click: select cell, double-click: start edit
+    // Cell click: select cell + header sort
     el.addEventListener('click', (e) => {
       const td = e.target.closest('[data-row][data-col]')
-      if (td) {
-        const row = parseInt(td.dataset.row, 10)
-        const col = parseInt(td.dataset.col, 10)
-        ctx.send('selectCell', row, col)
-      }
-      // Header click: sort
+      if (td) ctx.send('selectCell', parseInt(td.dataset.row), parseInt(td.dataset.col))
       const th = e.target.closest('.vibe-spreadsheet-header')
-      if (th) {
-        const col = parseInt(th.dataset.col, 10)
-        if (!isNaN(col)) ctx.send('sort', col)
-      }
+      if (th && !isNaN(parseInt(th.dataset.col))) ctx.send('sort', parseInt(th.dataset.col))
     })
 
+    // Double-click: start edit
     el.addEventListener('dblclick', (e) => {
-      const td = e.target.closest('[data-row][data-col]')
-      if (td) ctx.send('startEdit')
+      if (e.target.closest('[data-row][data-col]')) ctx.send('startEdit')
     })
 
-    // Keyboard: Enter/Tab/Escape for cell navigation & editing
+    // Keyboard shortcuts
     el.addEventListener('keydown', (e) => {
-      const storeState = spreadsheetStore.select()
-      const hasData = storeState.rows.length > 0 && storeState.columns.length > 0
-      if (!hasData) return
-
-      const sel = spreadsheetStore.select._sel // not directly available; use ctx state
-      // We'll handle via the component's own state — but we don't have sync access here.
-      // Instead, we read from a data attribute we maintain.
-
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        if (stateRef().editing) {
-          ctx.send('commitEdit')
-          ctx.send('navigate', 1, 0)
-        } else {
-          ctx.send('startEdit')
-        }
-        return
-      }
-
-      if (e.key === 'Tab') {
-        e.preventDefault()
-        if (stateRef().editing) ctx.send('commitEdit')
-        ctx.send('navigate', 0, e.shiftKey ? -1 : 1)
-        return
-      }
-
-      if (e.key === 'Escape') {
-        if (stateRef().editing) {
-          ctx.send('cancelEdit')
-        }
-        return
-      }
-
-      // Type to start editing (any printable char)
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (!stateRef().editing && stateRef().selectedCell) {
-          ctx.send('startEdit')
-          // The edit value will be set to the cell content; we need to replace it
-          // with the typed char. We'll handle this in a microtask.
-          setTimeout(() => ctx.send('setEditValue', e.key), 0)
-        }
+      if (e.key === 'Enter') { e.preventDefault(); ctx.send('commitEdit'); ctx.send('navigate', 1, 0) }
+      else if (e.key === 'Tab') { e.preventDefault(); ctx.send('commitEdit'); ctx.send('navigate', 0, e.shiftKey ? -1 : 1) }
+      else if (e.key === 'Escape') { ctx.send('cancelEdit') }
+      else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const sel = ctx.get().selectedCell
+        if (sel) { ctx.send('startEdit'); setTimeout(() => ctx.send('setEditValue', e.key), 10) }
       }
     })
 
-    // Maintain a reference to current component state for event handlers
-    let _state = { editing: false, selectedCell: null }
-    const stateRef = () => _state
-    const origSend = ctx.send.bind(ctx)
-    ctx.send = (action, ...args) => {
-      // Track state changes for keyboard handler
-      if (action === 'selectCell' && args.length >= 2) {
-        _state = { ..._state, selectedCell: { row: args[0], col: args[1] }, editing: false }
-      } else if (action === 'startEdit') {
-        _state = { ..._state, editing: true }
-      } else if (action === 'commitEdit' || action === 'cancelEdit') {
-        _state = { ..._state, editing: false }
-      } else if (action === 'navigate') {
-        _state = { ..._state, editing: false }
-      }
-      return origSend(action, ...args)
-    }
+    // Toolbar buttons
+    el.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-spreadsheet-action]')
+      if (!btn) return
+      const action = btn.dataset.spreadsheetAction
+      if (action === 'addRow') spreadsheetStore.send('addRow')
+      else if (action === 'deleteRow') spreadsheetStore.send('deleteRow')
+      else if (action === 'addColumn') spreadsheetStore.send('addColumn')
+      else if (action === 'deleteColumn') spreadsheetStore.send('deleteColumn')
+    })
 
     return () => { unsub() }
   },
 
-  // ── Public API ────────────────────────────────────────────────
-  getData() {
+    getData() {
     const s = spreadsheetStore.select()
     return { columns: s.columns, rows: s.rows }
   },

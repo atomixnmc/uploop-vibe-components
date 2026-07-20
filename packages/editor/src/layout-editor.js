@@ -142,6 +142,7 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
   },
 
   update: {
+    _refresh: (s) => ({ ...s }),   // triggers re-render on store change
     selectItem: (s, id) => ({ ...s, selectedId: id }),
     deselectAll: (s) => ({ ...s, selectedId: null }),
     setDragging: (s, dragging) => ({ ...s, dragging }),
@@ -438,64 +439,40 @@ export const VibeLayoutEditor = component('VibeLayoutEditor', {
   },
 
   mount(el, ctx) {
-    // Subscribe to store changes
+    // Subscribe to store changes and force re-render
     const unsub = layoutStore.subscribe(() => {
       ctx.send('_refresh')
     })
+    // Initial render
+    ctx.send('_refresh')
 
     const dropzone = el.querySelector('.vibe-layout-dropzone')
     const catalogList = el.querySelector('.vibe-layout-catalog-list')
 
-    // ── State ref for event handlers ────────────────────────────
-    let _selectedId = null
-    let _dragging = null
-    let _dragOverIdx = -1
-
-    const updateState = (action, ...args) => {
-      if (action === 'selectItem') _selectedId = args[0]
-      if (action === 'deselectAll') _selectedId = null
-      if (action === 'setDragging') _dragging = args[0]
-      if (action === 'setDragOverIdx') _dragOverIdx = args[0]
-      return ctx.send(action, ...args)
-    }
-
     // ── Property editor input handling ──────────────────────────
     el.addEventListener('input', (e) => {
       const inp = e.target.closest('.vibe-layout-prop-input')
-      if (!inp || !_selectedId) return
+      if (!inp) return
       const key = inp.dataset.propKey
       if (!key) return
-      layoutStore.send('updateItem', _selectedId, { [key]: inp.value })
-    })
-
-    el.addEventListener('change', (e) => {
-      // Handle checkbox changes via data-up-bool-like behavior
-      const cb = e.target.closest('input[type="checkbox"]')
-      if (!cb || !_selectedId) return
-      const ds = cb.dataset
-      if (ds.upBool) {
-        const [action, propKey] = ds.upBool.split(':')[1]?.split(',') || []
-        if (propKey) {
-          layoutStore.send('updateItem', _selectedId, { [propKey]: cb.checked })
-        }
-      }
+      const selectedId = ctx.get().selectedId
+      if (selectedId) layoutStore.send('updateItem', selectedId, { [key]: inp.value })
     })
 
     // ── Click: select / deselect items ──────────────────────────
     el.addEventListener('click', (e) => {
-      // Deselect when clicking empty dropzone
       if (e.target === dropzone && !e.target.closest('.vibe-layout-item')) {
-        updateState('deselectAll')
+        ctx.send('deselectAll')
         return
       }
       const itemEl = e.target.closest('.vibe-layout-item')
       if (itemEl) {
         const id = itemEl.dataset.itemId
-        if (id) updateState('selectItem', id)
+        if (id) ctx.send('selectItem', id)
       }
     })
 
-    // ── Pointer-based drag and drop ─────────────────────────────
+    // ── Catalog drag start ─────────────────────────────────────
 
     function getDropIndex(clientX, clientY) {
       if (!dropzone) return -1

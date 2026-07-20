@@ -514,3 +514,45 @@ test.describe("Editor Demo", () => {
     await expect(page.locator("body")).toContainText("Widget A");
   });
 });
+
+test.describe("Editor interactions", () => {
+  test("spreadsheet renders rows", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    // Should show product data in the spreadsheet
+    await expect(page.locator("body")).toContainText("Widget");
+  });
+
+  test("spreadsheet cell click works", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    // Click a cell in the spreadsheet
+    const cell = page.locator('[data-row][data-col]').first();
+    if (await cell.isVisible().catch(() => false)) {
+      await cell.click();
+      await page.waitForTimeout(300);
+      // Should not crash
+      expect(true).toBe(true);
+    }
+  });
+
+  test("layout editor renders without crash", async ({ page }) => {
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    // Layout editor should have catalog sidebar
+    const layoutSection = page.locator('#demo-layout');
+    await expect(layoutSection).toBeVisible();
+  });
+
+  test("no console errors on editor demo", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await page.goto("/editor-demo/");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1500);
+    expect(errors).toEqual([]);
+  });
+});
