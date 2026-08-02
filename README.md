@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/atomixnmc/uploop-vibe-components/main/docs/vibe-logo.svg">
-    <img alt="Uploop Vibe" src="https://raw.githubusercontent.com/atomixnmc/uploop-vibe-components/main/docs/vibe-logo.svg" width="420">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/iuploop/uploop-vibe-components/main/docs/vibe-logo.svg">
+    <img alt="Uploop Vibe" src="https://raw.githubusercontent.com/iuploop/uploop-vibe-components/main/docs/vibe-logo.svg" width="420">
   </picture>
 </p>
 
@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/ci.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/release.yml/badge.svg" alt="Release"></a>
-  <a href="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml"><img src="https://github.com/atomixnmc/uploop-vibe-components/actions/workflows/gh-pages.yml/badge.svg" alt="Pages"></a>
+  <a href="https://github.com/iuploop/uploop-vibe-components/actions/workflows/ci.yml"><img src="https://github.com/iuploop/uploop-vibe-components/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/iuploop/uploop-vibe-components/actions/workflows/release.yml"><img src="https://github.com/iuploop/uploop-vibe-components/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+  <a href="https://github.com/iuploop/uploop-vibe-components/actions/workflows/gh-pages.yml"><img src="https://github.com/iuploop/uploop-vibe-components/actions/workflows/gh-pages.yml/badge.svg" alt="Pages"></a>
   <a href="#"><img src="https://img.shields.io/badge/components-107-blueviolet" alt="Components"></a>
   <a href="#"><img src="https://img.shields.io/badge/charts-25-success" alt="Charts"></a>
   <a href="#"><img src="https://img.shields.io/badge/version-v0.3.0-orange" alt="Version"></a>
-  <a href="https://github.com/atomixnmc/uploopjs"><img src="https://img.shields.io/badge/powered%20by-UploopJS-646cff" alt="UploopJS"></a>
+  <a href="https://github.com/iuploop/uploopjs"><img src="https://img.shields.io/badge/powered%20by-UploopJS-646cff" alt="UploopJS"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple" alt="License"></a>
 </p>
 
@@ -24,7 +24,7 @@
 
 **Uploop Vibe** is an **AI-native design framework** built on the HyperGraph architecture. AI generates UIs from intents, Vibe executes via deterministic IFS loops, and every page exports a machine-readable manifest.
 
-Built on [UploopJS](https://github.com/atomixnmc/uploopjs).
+Built on [UploopJS](https://github.com/iuploop/uploopjs).
 
 ```bash
 vibe generate page --goal dashboard --entity Product --actions search,create,delete
@@ -56,13 +56,13 @@ const result = await runIFSLoop({
 ## Quick Start
 
 ```bash
-git clone https://github.com/atomixnmc/uploop-vibe-components.git
+git clone https://github.com/iuploop/uploop-vibe-components.git
 cd uploop-vibe-components
 pnpm install
 pnpm dev          # http://localhost:3100
 ```
 
-Live demo: [atomixnmc.github.io/uploop-vibe-components](https://atomixnmc.github.io/uploop-vibe-components/)
+Live demo: [iuploop.github.io/uploop-vibe-components](https://iuploop.github.io/uploop-vibe-components/)
 
 ## 107 Components · 10 Categories
 
@@ -160,7 +160,7 @@ Pure functions. Versioned graphs. Validated transforms. Loop guards prevent osci
 
 ## Companion
 
-[@uploop-lang-services](https://github.com/atomixnmc/uploop-lang-services) — 11 static checks for Uploop code.
+[@uploop-lang-services](https://github.com/iuploop/uploop-lang-services) — 11 static checks for Uploop code.
 
 ## License
 

@@ -2,7 +2,7 @@
 
 **100+ AI-first design components** for the Uploop HyperGraph framework.
 
-Built on [UploopJS](https://github.com/atomixnmc/uploopjs) — every component is a typed graph node. AI agents can generate, inspect, and transform UIs via deterministic IFS loops.
+Built on [UploopJS](https://github.com/iuploop/uploopjs) — every component is a typed graph node. AI agents can generate, inspect, and transform UIs via deterministic IFS loops.
 
 ## Install
 
